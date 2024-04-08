@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "post_tracking"
+dynamic = ["readme", "dependencies"]
+version = "0.0.1"
+description = "Post tracking code for use with a custom low-cost imaging platform"
+license = {file = "LICENSE"}
+keywords = ["tracking", "automation", "timelapse"]
+requires-python = ">=3.12"
+authors = [{name = "Tissue Engineering Lab", email = "antoine.weisrock@kuleuven.fr"}]
+maintainers = [{name = "Antoine Weisrock", email = "antoine.weisrock@gmail.com"}]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Image Recognition"
+]
+
+[project.urls]
+Homepage = "https://github.com/TissueEngineeringLab/ImagingPlatform"
+Repository = "https://github.com/TissueEngineeringLab/ImagingPlatform.git"
+Issues = "https://github.com/TissueEngineeringLab/ImagingPlatform/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = false
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown"}
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["post_tracking*"]
+exclude = []
+namespaces = false
