@@ -1,0 +1,13 @@
+[processing]
+camera = 'A'
+save = false
+border = 5
+
+[images]
+path.base = 'images/RebeccaFlex2/raw'
+path.format = '%Y_%m_%d_%H_%M_%S'
+t_min = '2024_03_08_14_35_33'
+
+[ROI.A]
+left = {oy = 1590, ox = 1200, ly = 90, lx = 800, thresh = 50}
+right = {oy = 1560, ox = 2930, ly = 100, lx = 720, thresh = 100}
