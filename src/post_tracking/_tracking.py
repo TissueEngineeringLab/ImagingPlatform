@@ -25,21 +25,7 @@ def detect_spots(image: np.ndarray,
   roi = deepcopy(image[y_offset:y_offset + height,
                        x_offset:x_offset + width])
   roi = (np.sum(roi, axis=2) / 3).astype('uint8')
-  from matplotlib import pyplot as plt
-  plt.figure()
-  plt.imshow(roi)
-  plt.show()
-  _, roi = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-  plt.figure()
-  plt.imshow(roi)
-  plt.show()
-  raise ValueError
-  roi[(roi > 200) | (roi < 100)] = 255
   roi = (np.clip(roi - 100, 0, 100) / 100 * 255).astype('uint8')
-
-  plt.figure()
-  plt.imshow(roi <= threshold)
-  plt.show()
 
   props = regionprops(label(roi <= threshold))
   props = [prop for prop in props if prop.solidity > 0.8 and prop.area > 200]
