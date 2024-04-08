@@ -4,9 +4,9 @@ save = false
 border = 5
 
 [images]
-path.base = 'images/RebeccaFlex2/raw'
+path.base = 'images/RebeccaFlex/raw'
 path.format = '%Y_%m_%d_%H_%M_%S'
-t_min = '2024_03_08_14_35_33'
+t_min = '2023_10_25_13_07_21'
 
 [ROI.A]
 left = {oy = 1590, ox = 1200, ly = 90, lx = 800, thresh = 50}

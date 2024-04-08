@@ -17,16 +17,10 @@ def detect_spots(image: np.ndarray,
                  threshold: int) -> Well:
   """"""
 
-  y_offset = 1590
-  x_offset = 1210
-  height = 90
-  width = 100
-
   roi = deepcopy(image[y_offset:y_offset + height,
                        x_offset:x_offset + width])
   roi = (np.sum(roi, axis=2) / 3).astype('uint8')
   roi = (np.clip(roi - 100, 0, 100) / 100 * 255).astype('uint8')
-
   props = regionprops(label(roi <= threshold))
   props = [prop for prop in props if prop.solidity > 0.8 and prop.area > 200]
 
