@@ -3,33 +3,44 @@
 import numpy as np
 from copy import deepcopy
 import cv2
-from skimage.morphology import label
-from skimage.measure import regionprops
+from functools import partial
+from typing import Optional
 
-from ._structure import Well, Spot
+from _structure import Spot
 
 
-def detect_spots(image: np.ndarray,
-                 y_offset: int,
-                 x_offset: int,
-                 height: int,
-                 width: int,
-                 threshold: int) -> Well:
+def detect_spot(image: np.ndarray, y_1: int,
+                x_1: int, y_2: int, x_2: int) -> Optional[Spot]:
   """"""
 
-  roi = deepcopy(image[y_offset:y_offset + height,
-                       x_offset:x_offset + width])
-  roi = (np.sum(roi, axis=2) / 3).astype('uint8')
-  roi = (np.clip(roi - 100, 0, 100) / 100 * 255).astype('uint8')
-  props = regionprops(label(roi <= threshold))
-  props = [prop for prop in props if prop.solidity > 0.8 and prop.area > 200]
+  (x_1, y_1), (x_2, y_2) = sorted(((x_1, y_1), (x_2, y_2)))
 
-  if len(props) != 2:
-    raise ValueError(f"Detected {len(props)} spots instead of 2 expected !")
+  if x_1 == x_2 or y_1 == y_2:
+    return
 
-  return Well(*[Spot(spot.bbox[0], spot.bbox[1], spot.bbox[2], spot.bbox[3],
-                x_offset, y_offset, spot.centroid[0], spot.centroid[1],
-                     threshold=threshold) for spot in props])
+  roi = deepcopy(image[x_1: x_2, y_1: y_2])
+  roi = (np.average(roi, axis=2)).astype('uint8')
+  _, roi = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+  contours, _ = cv2.findContours(roi, cv2.RETR_EXTERNAL,
+                                 cv2.CHAIN_APPROX_SIMPLE)
+  contours = sorted(contours, key=partial(cv2.arcLength, closed=True),
+                    reverse=True)
+  spot = np.zeros_like(roi, dtype=np.uint8)
+  cv2.drawContours(spot, contours, 0, (255,), -1)
+  detect = cv2.HoughCircles(spot,
+                            cv2.HOUGH_GRADIENT,
+                            1.0,
+                            np.max(spot.shape[:2]),
+                            param1=255,
+                            param2=1,
+                            minRadius=int(np.min(spot.shape[:2]) / 4),
+                            maxRadius=int(np.min(spot.shape[:2]) * 2))
+
+  if detect is None:
+    raise ValueError
+
+  x, y, r = map(int, np.squeeze(detect))
+  return Spot(x, y, r)
 
 
 def track_spot(image: np.ndarray, spot: Spot, offset: int) -> None:

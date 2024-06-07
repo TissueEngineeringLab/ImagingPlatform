@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 from ._structure import Quadrant
-from ._tracking import detect_spots
+from ._tracking import detect_spot
 
 
 def name2time(name: str, str_format: str) -> float:
@@ -46,7 +46,7 @@ def configure() -> Tuple[Quadrant, Path, str, bool, int, List[Path], str]:
 
   img = np.array(Image.open(images[0]))
 
-  w1 = detect_spots(img, oy_1, ox_1, ly_1, lx_1, thresh_1)
-  w2 = detect_spots(img, oy_2, ox_2, ly_2, lx_2, thresh_2)
+  w1 = detect_spot(img, oy_1, ox_1, ly_1, lx_1)
+  w2 = detect_spot(img, oy_2, ox_2, ly_2, lx_2)
 
   return Quadrant(w1, w2), base_path, path_format, save, border, images, camera

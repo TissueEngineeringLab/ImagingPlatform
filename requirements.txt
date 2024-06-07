@@ -4,3 +4,4 @@ tomli
 matplotlib
 opencv-python
 scikit-image
+pyqt6
