@@ -16,7 +16,7 @@ from typing import List
 from itertools import batched
 
 from _tracking import detect_spot
-from _structure import TimePoint, path_to_time
+from _structure import TimePoint, path_to_time, Quadrant
 
 
 class CustomScene(QGraphicsScene):
@@ -29,8 +29,8 @@ class CustomScene(QGraphicsScene):
 
     self._view = view
 
-    self._path: Optional[Path] = None
     self._img: Optional[Image] = None
+    self._quadrant: Optional[Quadrant] = None
 
     self._pixmap = QPixmap()
     self.addPixmap(self._pixmap)
@@ -39,6 +39,21 @@ class CustomScene(QGraphicsScene):
                           Qt.PenCapStyle.SquareCap, Qt.PenJoinStyle.BevelJoin)
     self._select_rect = QRectF()
     self._rect_item = self.addRect(self._select_rect, self._rect_pen, QBrush())
+
+    self._circle_brush = QBrush(QColor(0, 255, 0, 255),
+                                Qt.BrushStyle.SolidPattern)
+    self._circle_1_left = QRectF()
+    self._circle_1_right = QRectF()
+    self._circle_2_left = QRectF()
+    self._circle_2_right = QRectF()
+    self._circle_1_left_item = self.addEllipse(self._circle_1_left, QPen(),
+                                               self._circle_brush)
+    self._circle_1_right_item = self.addEllipse(self._circle_1_right, QPen(),
+                                                self._circle_brush)
+    self._circle_2_left_item = self.addEllipse(self._circle_2_left, QPen(),
+                                               self._circle_brush)
+    self._circle_2_right_item = self.addEllipse(self._circle_2_right, QPen(),
+                                                self._circle_brush)
 
     self._view_click_init: Optional[int] = None
     self._view_click_init_y: Optional[int] = None
@@ -96,19 +111,66 @@ class CustomScene(QGraphicsScene):
     else:
       super().mousePressEvent(event)
 
-  def update_image(self, path: Path) -> None:
+  def update_image(self, quadrant: Quadrant) -> None:
     """"""
 
-    self._path = path
-    self._img = Image.open(self._path)
+    self._quadrant = quadrant
+    self._img = Image.open(self._quadrant.path)
 
     for item in self.items():
       self.removeItem(item)
 
-    self._pixmap.load(str(self._path))
+    self._pixmap.load(str(self._quadrant.path))
     self.addPixmap(self._pixmap)
 
     self._rect_item = self.addRect(self._select_rect, self._rect_pen, QBrush())
+    self._circle_1_left_item = self.addEllipse(self._circle_1_left, QPen(),
+                                               self._circle_brush)
+    self._circle_1_right_item = self.addEllipse(self._circle_1_right, QPen(),
+                                                self._circle_brush)
+    self._circle_2_left_item = self.addEllipse(self._circle_2_left, QPen(),
+                                               self._circle_brush)
+    self._circle_2_right_item = self.addEllipse(self._circle_2_right, QPen(),
+                                                self._circle_brush)
+
+  def update_circles(self) -> None:
+    """"""
+
+    if (self._quadrant.well_1.spot_1 is not None
+        and self._quadrant.well_1.spot_1.radius is not None):
+      spot = self._quadrant.well_1.spot_1
+      self._circle_1_left.setCoords(spot.x - spot.radius,
+                                    spot.y - spot.radius,
+                                    spot.x + spot.radius,
+                                    spot.y + spot.radius)
+      self._circle_1_left_item.setRect(self._circle_1_left.normalized())
+
+    if (self._quadrant.well_1.spot_2 is not None
+        and self._quadrant.well_1.spot_2.radius is not None):
+      spot = self._quadrant.well_1.spot_2
+      self._circle_1_right.setCoords(spot.x - spot.radius,
+                                     spot.y - spot.radius,
+                                     spot.x + spot.radius,
+                                     spot.y + spot.radius)
+      self._circle_1_right_item.setRect(self._circle_1_right.normalized())
+
+    if (self._quadrant.well_2.spot_1 is not None
+        and self._quadrant.well_2.spot_1.radius is not None):
+      spot = self._quadrant.well_2.spot_1
+      self._circle_2_left.setCoords(spot.x - spot.radius,
+                                    spot.y - spot.radius,
+                                    spot.x + spot.radius,
+                                    spot.y + spot.radius)
+      self._circle_2_left_item.setRect(self._circle_2_left.normalized())
+
+    if (self._quadrant.well_2.spot_2 is not None
+        and self._quadrant.well_2.spot_2.radius is not None):
+      spot = self._quadrant.well_2.spot_2
+      self._circle_2_right.setCoords(spot.x - spot.radius,
+                                     spot.y - spot.radius,
+                                     spot.x + spot.radius,
+                                     spot.y + spot.radius)
+      self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
   def _leftMousePressEvent(self, event: QGraphicsSceneMouseEvent):
     """"""
@@ -143,7 +205,11 @@ class CustomScene(QGraphicsScene):
 
     if self._img is not None:
 
-      print(detect_spot(np.array(self._img), *map(int, self._select_rect.getCoords())))
+      detected = detect_spot(np.array(self._img),
+                             *map(int, self._select_rect.getCoords()))
+      if detected is not None:
+        self._quadrant.well_1.spot_1 = detected
+        self.update_circles()
 
       self._rect_item.hide()
       self._select_rect.setCoords(0, 0, 0, 0)
@@ -312,7 +378,8 @@ class MainWindow(QMainWindow):
       self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
                                                     path_3, path_4))
 
-    self._scene.update_image(self._timepoints[0].A.path)
+    self._scene.update_image(self._timepoints[0].A)
+    self._scene.update_circles()
 
 
 if __name__ == "__main__":

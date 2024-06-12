@@ -39,8 +39,8 @@ def detect_spot(image: np.ndarray, y_1: int,
   if detect is None:
     raise ValueError
 
-  x, y, r = map(int, np.squeeze(detect))
-  return Spot(x, y, r)
+  y, x, r = map(int, np.squeeze(detect))
+  return Spot(y_1 + y, x_1 + x, r)
 
 
 def track_spot(image: np.ndarray, spot: Spot, offset: int) -> None:

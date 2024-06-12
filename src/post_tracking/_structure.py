@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Iterator
 from numpy import linalg
 from pathlib import Path
@@ -21,8 +21,8 @@ def path_to_time(path: Path) -> float:
 class Spot:
   """"""
 
-  x: Optional[int] = None
-  y: Optional[int] = None
+  x: int
+  y: int
 
   radius: Optional[int] = None
 
@@ -66,8 +66,8 @@ class Quadrant:
   path: Path
   acq_time: float
 
-  well_1: Optional[Well] = None
-  well_2: Optional[Well] = None
+  well_1: Well = field(default_factory=Well)
+  well_2: Well = field(default_factory=Well)
 
   def __iter__(self) -> Iterator[Well]:
     return iter((self.well_1, self.well_2))
