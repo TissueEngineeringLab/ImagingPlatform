@@ -13,6 +13,8 @@ def detect_spot(image: np.ndarray, y_1: int,
                 x_1: int, y_2: int, x_2: int) -> Optional[Spot]:
   """"""
 
+  # Todo: Maximum radius parameter based on previous
+
   (x_1, y_1), (x_2, y_2) = sorted(((x_1, y_1), (x_2, y_2)))
 
   if x_1 == x_2 or y_1 == y_2:
@@ -37,6 +39,7 @@ def detect_spot(image: np.ndarray, y_1: int,
                             maxRadius=int(np.min(spot.shape[:2]) * 2))
 
   if detect is None:
+    # Todo: handle lost spot instead
     raise ValueError
 
   y, x, r = map(int, np.squeeze(detect))
