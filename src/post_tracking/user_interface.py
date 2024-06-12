@@ -1,12 +1,13 @@
 # coding: utf-8
 
-from PyQt6.QtCore import QSize, QRectF, Qt
-from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush
+from PyQt6.QtCore import QSize, QRectF, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush, QEnterEvent, QMouseEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                              QHBoxLayout, QWidget, QComboBox, QPushButton,
-                             QGraphicsView, QProgressBar, QScrollArea,
-                             QGraphicsScene, QGraphicsSceneMouseEvent,
-                             QGraphicsSceneWheelEvent, QFileDialog)
+                             QGraphicsView, QProgressBar, QGraphicsScene,
+                             QGraphicsSceneMouseEvent,
+                             QGraphicsSceneWheelEvent, QFileDialog, QFrame,
+                             QGraphicsEllipseItem)
 import sys
 from typing import Optional
 from pathlib import Path
@@ -21,6 +22,8 @@ from _structure import TimePoint, path_to_time, Quadrant
 
 class CustomScene(QGraphicsScene):
   """"""
+
+  detected = pyqtSignal(int, int, int, int)
 
   def __init__(self, view: QGraphicsView) -> None:
     """"""
@@ -40,20 +43,28 @@ class CustomScene(QGraphicsScene):
     self._select_rect = QRectF()
     self._rect_item = self.addRect(self._select_rect, self._rect_pen, QBrush())
 
-    self._circle_brush = QBrush(QColor(0, 255, 0, 255),
-                                Qt.BrushStyle.SolidPattern)
+    self._circle_brush_unselected = QBrush(QColor(0, 255, 0, 255),
+                                           Qt.BrushStyle.SolidPattern)
+    self._circle_brush_selected = QBrush(QColor(0, 255, 255, 255),
+                                         Qt.BrushStyle.SolidPattern)
     self._circle_1_left = QRectF()
     self._circle_1_right = QRectF()
     self._circle_2_left = QRectF()
     self._circle_2_right = QRectF()
     self._circle_1_left_item = self.addEllipse(self._circle_1_left, QPen(),
-                                               self._circle_brush)
+                                               self._circle_brush_selected)
     self._circle_1_right_item = self.addEllipse(self._circle_1_right, QPen(),
-                                                self._circle_brush)
+                                                self._circle_brush_unselected)
     self._circle_2_left_item = self.addEllipse(self._circle_2_left, QPen(),
-                                               self._circle_brush)
+                                               self._circle_brush_unselected)
     self._circle_2_right_item = self.addEllipse(self._circle_2_right, QPen(),
-                                                self._circle_brush)
+                                                self._circle_brush_unselected)
+
+    self._circles: List[QGraphicsEllipseItem] = [self._circle_1_left_item,
+                                                 self._circle_1_right_item,
+                                                 self._circle_2_left_item,
+                                                 self._circle_2_right_item]
+    self._selected_index: int = 0
 
     self._view_click_init: Optional[int] = None
     self._view_click_init_y: Optional[int] = None
@@ -124,14 +135,27 @@ class CustomScene(QGraphicsScene):
     self.addPixmap(self._pixmap)
 
     self._rect_item = self.addRect(self._select_rect, self._rect_pen, QBrush())
-    self._circle_1_left_item = self.addEllipse(self._circle_1_left, QPen(),
-                                               self._circle_brush)
-    self._circle_1_right_item = self.addEllipse(self._circle_1_right, QPen(),
-                                                self._circle_brush)
-    self._circle_2_left_item = self.addEllipse(self._circle_2_left, QPen(),
-                                               self._circle_brush)
-    self._circle_2_right_item = self.addEllipse(self._circle_2_right, QPen(),
-                                                self._circle_brush)
+    self._circle_1_left_item = self.addEllipse(
+      self._circle_1_left, QPen(),
+      self._circle_brush_selected if self._selected_index == 0
+      else self._circle_brush_unselected)
+    self._circle_1_right_item = self.addEllipse(
+      self._circle_1_right, QPen(),
+      self._circle_brush_selected if self._selected_index == 1
+      else self._circle_brush_unselected)
+    self._circle_2_left_item = self.addEllipse(
+      self._circle_2_left, QPen(),
+      self._circle_brush_selected if self._selected_index == 2
+      else self._circle_brush_unselected)
+    self._circle_2_right_item = self.addEllipse(
+      self._circle_2_right, QPen(),
+      self._circle_brush_selected if self._selected_index == 3
+      else self._circle_brush_unselected)
+
+    self._circles: List[QGraphicsEllipseItem] = [self._circle_1_left_item,
+                                                 self._circle_1_right_item,
+                                                 self._circle_2_left_item,
+                                                 self._circle_2_right_item]
 
   def update_circles(self) -> None:
     """"""
@@ -172,6 +196,17 @@ class CustomScene(QGraphicsScene):
                                      spot.y + spot.radius)
       self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
+  @pyqtSlot(int)
+  def circle_selected(self, value: int) -> None:
+    """"""
+
+    self._selected_index = value
+
+    for circle in self._circles:
+      circle.setBrush(self._circle_brush_unselected)
+
+    self._circles[value].setBrush(self._circle_brush_selected)
+
   def _leftMousePressEvent(self, event: QGraphicsSceneMouseEvent):
     """"""
 
@@ -208,8 +243,18 @@ class CustomScene(QGraphicsScene):
       detected = detect_spot(np.array(self._img),
                              *map(int, self._select_rect.getCoords()))
       if detected is not None:
-        self._quadrant.well_1.spot_1 = detected
+        if self._selected_index == 0:
+          self._quadrant.well_1.spot_1 = detected
+        elif self._selected_index == 1:
+          self._quadrant.well_1.spot_2 = detected
+        elif self._selected_index == 2:
+          self._quadrant.well_2.spot_1 = detected
+        elif self._selected_index == 3:
+          self._quadrant.well_2.spot_2 = detected
         self.update_circles()
+        self.detected.emit(self._selected_index, detected.x, detected.y,
+                           detected.radius if detected.radius is not None
+                           else -1)
 
       self._rect_item.hide()
       self._select_rect.setCoords(0, 0, 0, 0)
@@ -260,6 +305,156 @@ class CustomScene(QGraphicsScene):
     event.accept()
 
 
+class SinglePostFrame(QFrame, QWidget):
+  """"""
+
+  clicked = pyqtSignal(int)
+
+  def __init__(self, label: str, index: int) -> None:
+    """"""
+
+    QFrame.__init__(self)
+    QWidget.__init__(self)
+
+    self.selected: bool = False
+    self._index: int = index
+
+    # Setting attributes of the main frame
+    self.setLineWidth(1)
+    self.setFixedHeight(75)
+    self.setFrameShadow(QFrame.Shadow.Plain)
+    self.setFrameShape(QFrame.Shape.Box)
+
+    # Setting layout of the main frame
+    self._v_layout = QVBoxLayout()
+    self._h_layout = QHBoxLayout()
+    self.setLayout(self._v_layout)
+
+    # Label indicating which post is associated to the frame
+    self._title_label = QLabel(label)
+    self._title_label.setFixedHeight(30)
+    self._v_layout.addWidget(self._title_label)
+
+    self._v_layout.addLayout(self._h_layout)
+
+    # Label displaying the x position of the detected post
+    self._x_label = QLabel('X: N/A')
+    self._x_label.setFixedHeight(30)
+    self._x_label.setMinimumWidth(60)
+    self._h_layout.addWidget(self._x_label)
+
+    # Label displaying the y position of the detected post
+    self._y_label = QLabel('Y: N/A')
+    self._y_label.setFixedHeight(30)
+    self._y_label.setMinimumWidth(60)
+    self._h_layout.addWidget(self._y_label)
+
+    # Label displaying the radius of the detected post
+    self._r_label = QLabel('R: N/A')
+    self._r_label.setFixedHeight(30)
+    self._r_label.setMinimumWidth(60)
+    self._h_layout.addWidget(self._r_label)
+
+  def enterEvent(self, event: QEnterEvent):
+    """"""
+
+    if not self.selected:
+      self.setLineWidth(2)
+    event.accept()
+
+  def leaveEvent(self, event: QEnterEvent):
+    """"""
+
+    if not self.selected:
+      self.setLineWidth(1)
+    event.accept()
+
+  def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+    """"""
+
+    self.selected = True
+    self.setLineWidth(3)
+    self.clicked.emit(self._index)
+
+  def update_text(self, x: int, y: int, r: int):
+    """"""
+
+    self._x_label.setText(f'X: {x}')
+    self._y_label.setText(f'Y: {y}')
+    if r > 0:
+      self._r_label.setText(f'R: {r}')
+    else:
+      self._r_label.setText('R: N/A')
+
+
+class PostsParentFrame(QFrame):
+  """"""
+
+  clicked = pyqtSignal(int)
+
+  def __init__(self) -> None:
+    """"""
+
+    super().__init__()
+
+    # Layout of the frames in the scrollable area
+    self._posts_layout = QVBoxLayout()
+    self.setLayout(self._posts_layout)
+
+    # Each detectable spot gets its own frame
+    self._post_1_left_frame = SinglePostFrame('Left Well, Left Post', 0)
+    self._post_1_left_frame.clicked.connect(self.frame_clicked)
+    self._posts_layout.addWidget(self._post_1_left_frame)
+
+    self._post_1_right_frame = SinglePostFrame('Left Well, Right Post', 1)
+    self._post_1_right_frame.clicked.connect(self.frame_clicked)
+    self._posts_layout.addWidget(self._post_1_right_frame)
+
+    self._post_2_left_frame = SinglePostFrame('Right Well, Left Post', 2)
+    self._post_2_left_frame.clicked.connect(self.frame_clicked)
+    self._posts_layout.addWidget(self._post_2_left_frame)
+
+    self._post_2_right_frame = SinglePostFrame('Right Well, Right Post', 3)
+    self._post_2_right_frame.clicked.connect(self.frame_clicked)
+    self._posts_layout.addWidget(self._post_2_right_frame)
+
+    self._spacer_frame = QFrame()
+    self._spacer_frame.setMinimumHeight(10)
+    self._posts_layout.addWidget(self._spacer_frame)
+
+    self._frames = (self._post_1_left_frame, self._post_1_right_frame,
+                    self._post_2_left_frame, self._post_2_right_frame)
+
+    self._post_1_left_frame.selected = True
+    self._post_1_left_frame.setLineWidth(3)
+
+  @pyqtSlot(int)
+  def frame_clicked(self, value: int) -> None:
+    """"""
+
+    for frame in self._frames:
+      frame.selected = False
+      frame.setLineWidth(1)
+
+    self._frames[value].selected = True
+    self._frames[value].setLineWidth(3)
+
+    self.clicked.emit(value)
+
+  @pyqtSlot(int, int, int, int)
+  def circle_updated(self, index: int, x: int, y: int, r: int) -> None:
+    """"""
+
+    if index == 0:
+      self._post_1_left_frame.update_text(x, y, r)
+    elif index == 1:
+      self._post_1_right_frame.update_text(x, y, r)
+    elif index == 2:
+      self._post_2_left_frame.update_text(x, y, r)
+    elif index == 3:
+      self._post_2_right_frame.update_text(x, y, r)
+
+
 class MainWindow(QMainWindow):
   """"""
 
@@ -269,7 +464,7 @@ class MainWindow(QMainWindow):
     super().__init__()
 
     self.setWindowTitle('Spot selection')
-    self.setMinimumSize(QSize(600, 300))
+    self.setMinimumSize(QSize(950, 430))
 
     self._set_layout()
     self.setCentralWidget(self._main_widget)
@@ -293,6 +488,7 @@ class MainWindow(QMainWindow):
 
     self._spacer_1 = QLabel()
     self._spacer_1.setMaximumWidth(50)
+    self._spacer_1.setMinimumWidth(10)
     self._spacer_1.setFixedHeight(29)
     self._left_title_bar.addWidget(self._spacer_1)
 
@@ -314,6 +510,7 @@ class MainWindow(QMainWindow):
 
     self._spacer_2 = QLabel()
     self._spacer_2.setMaximumWidth(50)
+    self._spacer_2.setMinimumWidth(10)
     self._spacer_2.setFixedHeight(29)
     self._left_title_bar.addWidget(self._spacer_2)
 
@@ -335,6 +532,7 @@ class MainWindow(QMainWindow):
 
     self._spacer_3 = QLabel()
     self._spacer_3.setFixedHeight(29)
+    self._spacer_3.setMinimumWidth(10)
     self._left_title_bar.addWidget(self._spacer_3)
 
     # Rest of the left panel
@@ -350,10 +548,15 @@ class MainWindow(QMainWindow):
 
     # Right panel
     self._right_label = QLabel('Right panel')
+    self._right_label.setFixedSize(QSize(200, 29))
     self._right_panel_layout.addWidget(self._right_label)
 
-    self._posts_list = QScrollArea()
+    # Scrollable area containing the information on the detected spots
+    self._posts_list = PostsParentFrame()
+    self._posts_list.setMinimumHeight(350)
     self._right_panel_layout.addWidget(self._posts_list)
+    self._posts_list.clicked.connect(self._scene.circle_selected)
+    self._scene.detected.connect(self._posts_list.circle_updated)
 
     # Process button
     self._process_button = QPushButton()
