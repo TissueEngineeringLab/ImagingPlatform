@@ -74,6 +74,7 @@ class CustomScene(QGraphicsScene):
     self._last_drag_event: Optional[QGraphicsSceneMouseEvent] = None
     self._zoom_factor: float = 1.3
     self._zoom_level: float = 1.0
+    self._zoom_index: int = 0
 
     self.post_detected_in_scene.connect(self.draw_circles_in_scene)
 
@@ -82,12 +83,14 @@ class CustomScene(QGraphicsScene):
 
     if self._img is not None:
 
-      if event.delta() > 0:
+      if event.delta() > 0 and self._zoom_index < 10:
         self._view.scale(self._zoom_factor, self._zoom_factor)
         self._zoom_level *= self._zoom_factor
-      elif event.delta() < 0:
+        self._zoom_index += 1
+      elif event.delta() < 0 and self._zoom_index > -10:
         self._view.scale(1 / self._zoom_factor, 1 / self._zoom_factor)
         self._zoom_level /= self._zoom_factor
+        self._zoom_index -= 1
 
       self._rect_pen.setWidthF(2 / self._zoom_level)
       self._rect_item.setPen(self._rect_pen)
