@@ -45,7 +45,7 @@ class CustomScene(QGraphicsScene):
 
     self._circle_brush_unselected = QBrush(QColor(0, 255, 0, 255),
                                            Qt.BrushStyle.SolidPattern)
-    self._circle_brush_selected = QBrush(QColor(0, 255, 255, 255),
+    self._circle_brush_selected = QBrush(QColor(255, 255, 0, 255),
                                          Qt.BrushStyle.SolidPattern)
     self._circle_1_left = QRectF()
     self._circle_1_right = QRectF()
