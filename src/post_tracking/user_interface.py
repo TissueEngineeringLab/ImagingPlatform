@@ -23,7 +23,7 @@ from _structure import TimePoint, path_to_time, Quadrant
 class CustomScene(QGraphicsScene):
   """"""
 
-  detected = pyqtSignal(int, int, int)
+  post_detected = pyqtSignal(int, int, int)
 
   def __init__(self, view: QGraphicsView) -> None:
     """"""
@@ -75,7 +75,7 @@ class CustomScene(QGraphicsScene):
     self._zoom_factor: float = 1.3
     self._zoom_level: float = 1.0
 
-    self.detected.connect(self.update_circles)
+    self.post_detected.connect(self.draw_circles)
 
   def wheelEvent(self, event: QGraphicsSceneWheelEvent):
     """"""
@@ -125,7 +125,7 @@ class CustomScene(QGraphicsScene):
       super().mousePressEvent(event)
 
   @pyqtSlot(Quadrant)
-  def update_image(self, quadrant: Quadrant) -> None:
+  def reload_image(self, quadrant: Quadrant) -> None:
     """"""
 
     self._quadrant = quadrant
@@ -161,7 +161,7 @@ class CustomScene(QGraphicsScene):
                                                  self._circle_2_right_item]
 
   @pyqtSlot()
-  def update_circles(self, *_, **__) -> None:
+  def draw_circles(self, *_, **__) -> None:
     """"""
 
     if (self._quadrant.well_1.spot_1 is not None
@@ -201,7 +201,7 @@ class CustomScene(QGraphicsScene):
       self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
   @pyqtSlot(int)
-  def circle_selected(self, value: int) -> None:
+  def highlight_selected_circle(self, value: int) -> None:
     """"""
 
     self._selected_index = value
@@ -255,9 +255,9 @@ class CustomScene(QGraphicsScene):
           self._quadrant.well_2.spot_1 = detected
         elif self._selected_index == 3:
           self._quadrant.well_2.spot_2 = detected
-        self.detected.emit(detected.x, detected.y,
-                           detected.radius if detected.radius is not None
-                           else -1)
+        self.post_detected.emit(detected.x, detected.y,
+                                detected.radius if detected.radius is not None
+                                else -1)
 
       self._rect_item.hide()
       self._select_rect.setCoords(0, 0, 0, 0)
@@ -397,8 +397,8 @@ class SinglePostFrame(QFrame, QWidget):
 class PostsParentFrame(QFrame):
   """"""
 
-  clicked = pyqtSignal(int)
-  circle_update = pyqtSignal(int, int, int)
+  post_selected = pyqtSignal(int)
+  circle_updated = pyqtSignal(int, int, int)
 
   def __init__(self) -> None:
     """"""
@@ -411,19 +411,19 @@ class PostsParentFrame(QFrame):
 
     # Each detectable spot gets its own frame
     self._post_1_left_frame = SinglePostFrame('Left Well, Left Post', 0)
-    self._post_1_left_frame.clicked.connect(self.frame_clicked)
+    self._post_1_left_frame.clicked.connect(self.highlight_selected_frame)
     self._posts_layout.addWidget(self._post_1_left_frame)
 
     self._post_1_right_frame = SinglePostFrame('Left Well, Right Post', 1)
-    self._post_1_right_frame.clicked.connect(self.frame_clicked)
+    self._post_1_right_frame.clicked.connect(self.highlight_selected_frame)
     self._posts_layout.addWidget(self._post_1_right_frame)
 
     self._post_2_left_frame = SinglePostFrame('Right Well, Left Post', 2)
-    self._post_2_left_frame.clicked.connect(self.frame_clicked)
+    self._post_2_left_frame.clicked.connect(self.highlight_selected_frame)
     self._posts_layout.addWidget(self._post_2_left_frame)
 
     self._post_2_right_frame = SinglePostFrame('Right Well, Right Post', 3)
-    self._post_2_right_frame.clicked.connect(self.frame_clicked)
+    self._post_2_right_frame.clicked.connect(self.highlight_selected_frame)
     self._posts_layout.addWidget(self._post_2_right_frame)
 
     self._spacer_frame = QFrame()
@@ -436,13 +436,13 @@ class PostsParentFrame(QFrame):
     self._post_1_left_frame.selected = True
     self._post_1_left_frame.setLineWidth(3)
 
-    self.circle_update.connect(self._post_1_left_frame.update_text)
-    self.circle_update.connect(self._post_1_right_frame.update_text)
-    self.circle_update.connect(self._post_2_left_frame.update_text)
-    self.circle_update.connect(self._post_2_right_frame.update_text)
+    self.circle_updated.connect(self._post_1_left_frame.update_text)
+    self.circle_updated.connect(self._post_1_right_frame.update_text)
+    self.circle_updated.connect(self._post_2_left_frame.update_text)
+    self.circle_updated.connect(self._post_2_right_frame.update_text)
 
   @pyqtSlot(int)
-  def frame_clicked(self, value: int) -> None:
+  def highlight_selected_frame(self, value: int) -> None:
     """"""
 
     for frame in self._frames:
@@ -452,19 +452,19 @@ class PostsParentFrame(QFrame):
     self._frames[value].selected = True
     self._frames[value].setLineWidth(3)
 
-    self.clicked.emit(value)
+    self.post_selected.emit(value)
 
   @pyqtSlot(int, int, int)
-  def circle_updated(self, x: int, y: int, r: int) -> None:
+  def update_text(self, x: int, y: int, r: int) -> None:
     """"""
 
-    self.circle_update.emit(x, y, r)
+    self.circle_updated.emit(x, y, r)
 
 
 class MainWindow(QMainWindow):
   """"""
 
-  loaded = pyqtSignal(Quadrant)
+  images_loaded = pyqtSignal(Quadrant)
 
   def __init__(self) -> None:
     """"""
@@ -480,8 +480,8 @@ class MainWindow(QMainWindow):
     self._img_folder: Optional[Path] = None
     self._timepoints: List[TimePoint] = list()
 
-    self.loaded.connect(self._scene.update_image)
-    self.loaded.connect(self._scene.update_circles)
+    self.images_loaded.connect(self._scene.reload_image)
+    self.images_loaded.connect(self._scene.draw_circles)
 
   def _set_layout(self) -> None:
     """"""
@@ -566,8 +566,9 @@ class MainWindow(QMainWindow):
     self._posts_list = PostsParentFrame()
     self._posts_list.setMinimumHeight(350)
     self._right_panel_layout.addWidget(self._posts_list)
-    self._posts_list.clicked.connect(self._scene.circle_selected)
-    self._scene.detected.connect(self._posts_list.circle_updated)
+    self._posts_list.post_selected.connect(
+      self._scene.highlight_selected_circle)
+    self._scene.post_detected.connect(self._posts_list.update_text)
 
     # Process button
     self._process_button = QPushButton()
@@ -595,7 +596,7 @@ class MainWindow(QMainWindow):
       self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
                                                     path_3, path_4))
 
-    self.loaded.emit(self._timepoints[0].A)
+    self.images_loaded.emit(self._timepoints[0].A)
 
 
 if __name__ == "__main__":
