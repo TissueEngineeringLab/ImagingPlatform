@@ -15,7 +15,8 @@ def detect_spot(image: np.ndarray, y_1: int,
 
   # Todo: Maximum radius parameter based on previous
 
-  (x_1, y_1), (x_2, y_2) = sorted(((x_1, y_1), (x_2, y_2)))
+  x_1, x_2 = sorted((x_1, x_2))
+  y_1, y_2 = sorted((y_1, y_2))
 
   if x_1 == x_2 or y_1 == y_2:
     return
