@@ -407,11 +407,22 @@ class SinglePostFrame(QFrame, QWidget):
     self.setLineWidth(1)
 
   @pyqtSlot(int, int, int)
-  def update_text(self, x: int, y: int, r: int):
+  def update_selected_text(self, x: int, y: int, r: int):
     """"""
 
     if not self.selected:
       return
+
+    self._x_label.setText(f'X: {x}')
+    self._y_label.setText(f'Y: {y}')
+    if r > 0:
+      self._r_label.setText(f'R: {r}')
+    else:
+      self._r_label.setText('R: N/A')
+
+  @pyqtSlot(int, int, int)
+  def update_text(self, x: int, y: int, r: int):
+    """"""
 
     self._x_label.setText(f'X: {x}')
     self._y_label.setText(f'Y: {y}')
@@ -433,7 +444,7 @@ class PostsParentFrame(QFrame):
   """"""
 
   post_selected = pyqtSignal(int)
-  circle_updated = pyqtSignal(int, int, int)
+  selected_circle_updated = pyqtSignal(int, int, int)
   text_reset = pyqtSignal()
 
   def __init__(self) -> None:
@@ -472,10 +483,14 @@ class PostsParentFrame(QFrame):
     self._post_1_left_frame.selected = True
     self._post_1_left_frame.setLineWidth(3)
 
-    self.circle_updated.connect(self._post_1_left_frame.update_text)
-    self.circle_updated.connect(self._post_1_right_frame.update_text)
-    self.circle_updated.connect(self._post_2_left_frame.update_text)
-    self.circle_updated.connect(self._post_2_right_frame.update_text)
+    self.selected_circle_updated.connect(
+      self._post_1_left_frame.update_selected_text)
+    self.selected_circle_updated.connect(
+      self._post_1_right_frame.update_selected_text)
+    self.selected_circle_updated.connect(
+      self._post_2_left_frame.update_selected_text)
+    self.selected_circle_updated.connect(
+      self._post_2_right_frame.update_selected_text)
     self.text_reset.connect(self._post_1_left_frame.reset_text)
     self.text_reset.connect(self._post_1_right_frame.reset_text)
     self.text_reset.connect(self._post_2_left_frame.reset_text)
@@ -501,10 +516,10 @@ class PostsParentFrame(QFrame):
     self.post_selected.emit(value)
 
   @pyqtSlot(int, int, int)
-  def update_text(self, x: int, y: int, r: int) -> None:
+  def update_selected_text(self, x: int, y: int, r: int) -> None:
     """"""
 
-    self.circle_updated.emit(x, y, r)
+    self.selected_circle_updated.emit(x, y, r)
 
   @pyqtSlot()
   def reset_text(self) -> None:
@@ -622,7 +637,7 @@ class MainWindow(QMainWindow):
     self._right_panel_layout.addWidget(self._posts_list)
     self._posts_list.post_selected.connect(
       self._scene.highlight_selected_circle)
-    self._scene.post_detected.connect(self._posts_list.update_text)
+    self._scene.post_detected.connect(self._posts_list.update_selected_text)
 
     # Process button
     self._process_button = QPushButton()
