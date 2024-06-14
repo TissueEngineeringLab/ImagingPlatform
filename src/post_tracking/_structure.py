@@ -17,6 +17,14 @@ def path_to_time(path: Path) -> float:
                                          path.name).groups())))
 
 
+def path_to_str(path: Path) -> str:
+  """"""
+
+  return '{}/{}/{} {}:{}:{}'.format(*fullmatch(r'(\d+)_(\d+)_(\d+)_(\d+)_'
+                                               r'(\d+)_(\d+)_[ABCD]\.jpg',
+                                               path.name).groups())
+
+
 @dataclass
 class Spot:
   """"""
@@ -117,3 +125,18 @@ class TimePoint:
                Quadrant(path_b, time_b),
                Quadrant(path_c, time_c),
                Quadrant(path_d, time_d))
+
+  def __getitem__(self, item: str) -> Quadrant:
+    """"""
+
+    if item == 'A':
+      return self.A
+    elif item == 'B':
+      return self.B
+    elif item == 'C':
+      return self.C
+    elif item == 'D':
+      return self.D
+
+    else:
+      raise AttributeError

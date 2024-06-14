@@ -13,11 +13,11 @@ from typing import Optional
 from pathlib import Path
 from PIL import Image
 import numpy as np
-from typing import List
-from itertools import batched
+from typing import List, Dict
+from itertools import batched, count
 
 from _tracking import detect_spot
-from _structure import TimePoint, path_to_time, Quadrant
+from _structure import TimePoint, path_to_time, Quadrant, path_to_str
 
 
 class CustomScene(QGraphicsScene):
@@ -587,6 +587,8 @@ class MainWindow(QMainWindow):
   """"""
 
   image_loaded = pyqtSignal(Quadrant)
+  quadrant_changed = pyqtSignal(int)
+  time_changed = pyqtSignal(int)
 
   def __init__(self) -> None:
     """"""
@@ -594,13 +596,16 @@ class MainWindow(QMainWindow):
     super().__init__()
 
     self.setWindowTitle('Spot selection')
-    self.setMinimumSize(QSize(950, 430))
+    self.setMinimumSize(QSize(1100, 430))
 
     self._set_layout()
     self.setCentralWidget(self._main_widget)
 
     self._img_folder: Optional[Path] = None
     self._timepoints: List[TimePoint] = list()
+    self._time_idx: int = 0
+    self._quadrant: str = 'A'
+    self._time_to_index: Dict[str, int] = dict()
 
     self.image_loaded.connect(self._scene.reload_image_in_scene)
     self.image_loaded.connect(self._scene.reset_circles_in_scene)
@@ -633,15 +638,22 @@ class MainWindow(QMainWindow):
     self._left_title_bar.addWidget(self._time_label)
 
     self._time_combo = QComboBox()
-    self._time_combo.setFixedSize(QSize(80, 29))
+    self._time_combo.setFixedSize(QSize(180, 29))
+    self._time_combo.setEnabled(False)
+    self._time_combo.currentTextChanged.connect(self.select_time)
+    self.time_changed.connect(self._time_combo.setCurrentIndex)
     self._left_title_bar.addWidget(self._time_combo)
 
     self._prev_time_button = QPushButton('<')
+    self._prev_time_button.clicked.connect(self.prev_time)
     self._prev_time_button.setFixedSize(QSize(29, 29))
+    self._prev_time_button.setEnabled(False)
     self._left_title_bar.addWidget(self._prev_time_button)
 
     self._next_time_button = QPushButton('>')
+    self._next_time_button.clicked.connect(self.next_time)
     self._next_time_button.setFixedSize(QSize(29, 29))
+    self._next_time_button.setEnabled(False)
     self._left_title_bar.addWidget(self._next_time_button)
 
     self._spacer_2 = QLabel()
@@ -655,15 +667,23 @@ class MainWindow(QMainWindow):
     self._left_title_bar.addWidget(self._quadrant_label)
 
     self._quadrant_combo = QComboBox()
+    self._quadrant_combo.insertItems(0, ('A', 'B', 'C', 'D'))
     self._quadrant_combo.setFixedSize(QSize(80, 29))
+    self._quadrant_combo.setEnabled(False)
+    self._quadrant_combo.currentTextChanged.connect(self.select_quadrant)
+    self.quadrant_changed.connect(self._quadrant_combo.setCurrentIndex)
     self._left_title_bar.addWidget(self._quadrant_combo)
 
     self._prev_quad_button = QPushButton('<')
+    self._prev_quad_button.clicked.connect(self.prev_quadrant)
     self._prev_quad_button.setFixedSize(QSize(29, 29))
+    self._prev_quad_button.setEnabled(False)
     self._left_title_bar.addWidget(self._prev_quad_button)
 
     self._next_quad_button = QPushButton('>')
+    self._next_quad_button.clicked.connect(self.next_quadrant)
     self._next_quad_button.setFixedSize(QSize(29, 29))
+    self._next_quad_button.setEnabled(False)
     self._left_title_bar.addWidget(self._next_quad_button)
 
     self._spacer_3 = QLabel()
@@ -706,6 +726,86 @@ class MainWindow(QMainWindow):
     self._main_widget = QWidget()
     self._main_widget.setLayout(self._main_layout)
 
+  @pyqtSlot(str)
+  def select_time(self, value: str) -> None:
+    """"""
+
+    self._time_idx = self._time_to_index[value]
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+
+  @pyqtSlot()
+  def prev_time(self) -> None:
+    """"""
+
+    if self._time_idx <= 0:
+      return
+
+    self._time_idx -= 1
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.time_changed.emit(self._time_idx)
+
+  @pyqtSlot()
+  def next_time(self) -> None:
+    """"""
+
+    if self._time_idx >= len(self._timepoints):
+      return
+
+    self._time_idx += 1
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.time_changed.emit(self._time_idx)
+
+  @pyqtSlot(str)
+  def select_quadrant(self, value: str) -> None:
+    """"""
+
+    self._quadrant = value
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+
+  @pyqtSlot()
+  def prev_quadrant(self):
+    """"""
+
+    val = -1
+
+    if self._quadrant == 'A':
+      self._quadrant = 'D'
+      val = 3
+    elif self._quadrant == 'B':
+      self._quadrant = 'A'
+      val = 0
+    elif self._quadrant == 'C':
+      self._quadrant = 'B'
+      val = 1
+    elif self._quadrant == 'D':
+      self._quadrant = 'C'
+      val = 2
+
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.quadrant_changed.emit(val)
+
+  @pyqtSlot()
+  def next_quadrant(self):
+    """"""
+
+    val = -1
+
+    if self._quadrant == 'A':
+      self._quadrant = 'B'
+      val = 1
+    elif self._quadrant == 'B':
+      self._quadrant = 'C'
+      val = 2
+    elif self._quadrant == 'C':
+      self._quadrant = 'D'
+      val = 3
+    elif self._quadrant == 'D':
+      self._quadrant = 'A'
+      val = 0
+
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.quadrant_changed.emit(val)
+
   @pyqtSlot()
   def load_images(self) -> None:
     """"""
@@ -717,11 +817,25 @@ class MainWindow(QMainWindow):
     images = sorted(Path(folder).glob('*.jpg'), key=path_to_time)
 
     self._timepoints.clear()
+    self._time_idx = 0
+    self._quadrant = 'A'
     for path_1, path_2, path_3, path_4 in batched(images, 4):
       self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
                                                     path_3, path_4))
 
-    self.image_loaded.emit(self._timepoints[0].A)
+    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+
+    self._time_to_index = dict(zip((path_to_str(time_point.A.path) for
+                                    time_point in self._timepoints),
+                                   count()))
+    self._time_combo.insertItems(0, self._time_to_index.keys())
+
+    self._quadrant_combo.setEnabled(True)
+    self._prev_quad_button.setEnabled(True)
+    self._next_quad_button.setEnabled(True)
+    self._time_combo.setEnabled(True)
+    self._prev_time_button.setEnabled(True)
+    self._next_time_button.setEnabled(True)
 
 
 if __name__ == "__main__":
