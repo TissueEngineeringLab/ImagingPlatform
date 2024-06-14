@@ -124,6 +124,7 @@ class CustomScene(QGraphicsScene):
     else:
       super().mousePressEvent(event)
 
+  @pyqtSlot(Quadrant)
   def update_image(self, quadrant: Quadrant) -> None:
     """"""
 
@@ -159,6 +160,7 @@ class CustomScene(QGraphicsScene):
                                                  self._circle_2_left_item,
                                                  self._circle_2_right_item]
 
+  @pyqtSlot()
   def update_circles(self, *_, **__) -> None:
     """"""
 
@@ -459,6 +461,8 @@ class PostsParentFrame(QFrame):
 class MainWindow(QMainWindow):
   """"""
 
+  loaded = pyqtSignal(Quadrant)
+
   def __init__(self) -> None:
     """"""
 
@@ -472,6 +476,9 @@ class MainWindow(QMainWindow):
 
     self._img_folder: Optional[Path] = None
     self._timepoints: List[TimePoint] = list()
+
+    self.loaded.connect(self._scene.update_image)
+    self.loaded.connect(self._scene.update_circles)
 
   def _set_layout(self) -> None:
     """"""
@@ -582,8 +589,7 @@ class MainWindow(QMainWindow):
       self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
                                                     path_3, path_4))
 
-    self._scene.update_image(self._timepoints[0].A)
-    self._scene.update_circles()
+    self.loaded.emit(self._timepoints[0].A)
 
 
 if __name__ == "__main__":
