@@ -23,7 +23,7 @@ from _structure import TimePoint, path_to_time, Quadrant
 class CustomScene(QGraphicsScene):
   """"""
 
-  detected = pyqtSignal(int, int, int, int)
+  detected = pyqtSignal(int, int, int)
 
   def __init__(self, view: QGraphicsView) -> None:
     """"""
@@ -255,7 +255,7 @@ class CustomScene(QGraphicsScene):
           self._quadrant.well_2.spot_1 = detected
         elif self._selected_index == 3:
           self._quadrant.well_2.spot_2 = detected
-        self.detected.emit(self._selected_index, detected.x, detected.y,
+        self.detected.emit(detected.x, detected.y,
                            detected.radius if detected.radius is not None
                            else -1)
 
@@ -379,8 +379,12 @@ class SinglePostFrame(QFrame, QWidget):
     self.setLineWidth(3)
     self.clicked.emit(self._index)
 
+  @pyqtSlot(int, int, int)
   def update_text(self, x: int, y: int, r: int):
     """"""
+
+    if not self.selected:
+      return
 
     self._x_label.setText(f'X: {x}')
     self._y_label.setText(f'Y: {y}')
@@ -394,6 +398,7 @@ class PostsParentFrame(QFrame):
   """"""
 
   clicked = pyqtSignal(int)
+  circle_update = pyqtSignal(int, int, int)
 
   def __init__(self) -> None:
     """"""
@@ -431,6 +436,11 @@ class PostsParentFrame(QFrame):
     self._post_1_left_frame.selected = True
     self._post_1_left_frame.setLineWidth(3)
 
+    self.circle_update.connect(self._post_1_left_frame.update_text)
+    self.circle_update.connect(self._post_1_right_frame.update_text)
+    self.circle_update.connect(self._post_2_left_frame.update_text)
+    self.circle_update.connect(self._post_2_right_frame.update_text)
+
   @pyqtSlot(int)
   def frame_clicked(self, value: int) -> None:
     """"""
@@ -444,18 +454,11 @@ class PostsParentFrame(QFrame):
 
     self.clicked.emit(value)
 
-  @pyqtSlot(int, int, int, int)
-  def circle_updated(self, index: int, x: int, y: int, r: int) -> None:
+  @pyqtSlot(int, int, int)
+  def circle_updated(self, x: int, y: int, r: int) -> None:
     """"""
 
-    if index == 0:
-      self._post_1_left_frame.update_text(x, y, r)
-    elif index == 1:
-      self._post_1_right_frame.update_text(x, y, r)
-    elif index == 2:
-      self._post_2_left_frame.update_text(x, y, r)
-    elif index == 3:
-      self._post_2_right_frame.update_text(x, y, r)
+    self.circle_update.emit(x, y, r)
 
 
 class MainWindow(QMainWindow):
@@ -576,6 +579,7 @@ class MainWindow(QMainWindow):
     self._main_widget = QWidget()
     self._main_widget.setLayout(self._main_layout)
 
+  @pyqtSlot()
   def _load_images(self) -> None:
     """"""
 
