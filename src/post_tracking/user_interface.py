@@ -328,7 +328,7 @@ class SinglePostFrame(QFrame, QWidget):
   """"""
 
   clicked = pyqtSignal(int)
-  switch_to_next = pyqtSignal()
+  switch_next = pyqtSignal()
 
   def __init__(self, label: str, index: int) -> None:
     """"""
@@ -397,7 +397,7 @@ class SinglePostFrame(QFrame, QWidget):
     self.clicked.emit(self.index)
 
   @pyqtSlot()
-  def software_select(self) -> None:
+  def soft_select(self) -> None:
     """"""
 
     self.clicked.emit(self.index)
@@ -430,7 +430,7 @@ class SinglePostFrame(QFrame, QWidget):
     else:
       self._r_label.setText('R: N/A')
 
-    self.switch_to_next.emit()
+    self.switch_next.emit()
 
   @pyqtSlot()
   def reset_text(self) -> None:
@@ -458,79 +458,59 @@ class PostsParentFrame(QFrame):
     self.setLayout(self._posts_layout)
 
     # Each detectable spot gets its own frame
-    self._post_1_left_frame = SinglePostFrame('Left Well, Left Post', 0)
-    self._post_1_left_frame.clicked.connect(
-      self.send_highlight_circle_to_scene)
-    self._posts_layout.addWidget(self._post_1_left_frame)
+    self._post_1_l_frame = SinglePostFrame('Left Well, Left Post', 0)
+    self._post_1_l_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._posts_layout.addWidget(self._post_1_l_frame)
 
-    self._post_1_right_frame = SinglePostFrame('Left Well, Right Post', 1)
-    self._post_1_right_frame.clicked.connect(
-      self.send_highlight_circle_to_scene)
-    self._posts_layout.addWidget(self._post_1_right_frame)
+    self._post_1_r_frame = SinglePostFrame('Left Well, Right Post', 1)
+    self._post_1_r_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._posts_layout.addWidget(self._post_1_r_frame)
 
-    self._post_2_left_frame = SinglePostFrame('Right Well, Left Post', 2)
-    self._post_2_left_frame.clicked.connect(
-      self.send_highlight_circle_to_scene)
-    self._posts_layout.addWidget(self._post_2_left_frame)
+    self._post_2_l_frame = SinglePostFrame('Right Well, Left Post', 2)
+    self._post_2_l_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._posts_layout.addWidget(self._post_2_l_frame)
 
-    self._post_2_right_frame = SinglePostFrame('Right Well, Right Post', 3)
-    self._post_2_right_frame.clicked.connect(
-      self.send_highlight_circle_to_scene)
-    self._posts_layout.addWidget(self._post_2_right_frame)
+    self._post_2_r_frame = SinglePostFrame('Right Well, Right Post', 3)
+    self._post_2_r_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._posts_layout.addWidget(self._post_2_r_frame)
 
     self._spacer_frame = QFrame()
     self._spacer_frame.setMinimumHeight(10)
     self._posts_layout.addWidget(self._spacer_frame)
 
-    self._frames = (self._post_1_left_frame, self._post_1_right_frame,
-                    self._post_2_left_frame, self._post_2_right_frame)
+    self._frames = (self._post_1_l_frame, self._post_1_r_frame,
+                    self._post_2_l_frame, self._post_2_r_frame)
 
-    self._post_1_left_frame.selected = True
-    self._post_1_left_frame.setLineWidth(3)
+    self._post_1_l_frame.selected = True
+    self._post_1_l_frame.setLineWidth(3)
 
-    self.spot_params_updated.connect(self._post_1_left_frame.update_text)
-    self.spot_params_updated.connect(self._post_1_right_frame.update_text)
-    self.spot_params_updated.connect(self._post_2_left_frame.update_text)
-    self.spot_params_updated.connect(self._post_2_right_frame.update_text)
+    self.spot_params_updated.connect(self._post_1_l_frame.update_text)
+    self.spot_params_updated.connect(self._post_1_r_frame.update_text)
+    self.spot_params_updated.connect(self._post_2_l_frame.update_text)
+    self.spot_params_updated.connect(self._post_2_r_frame.update_text)
 
-    self.reset_text_requested.connect(self._post_1_left_frame.reset_text)
-    self.reset_text_requested.connect(self._post_1_right_frame.reset_text)
-    self.reset_text_requested.connect(self._post_2_left_frame.reset_text)
-    self.reset_text_requested.connect(self._post_2_right_frame.reset_text)
+    self.reset_text_requested.connect(self._post_1_l_frame.reset_text)
+    self.reset_text_requested.connect(self._post_1_r_frame.reset_text)
+    self.reset_text_requested.connect(self._post_2_l_frame.reset_text)
+    self.reset_text_requested.connect(self._post_2_r_frame.reset_text)
 
-    self._post_1_left_frame.clicked.connect(
-      self._post_1_right_frame.unselect_entry)
-    self._post_1_left_frame.clicked.connect(
-      self._post_2_left_frame.unselect_entry)
-    self._post_1_left_frame.clicked.connect(
-      self._post_2_right_frame.unselect_entry)
-    self._post_1_right_frame.clicked.connect(
-      self._post_1_left_frame.unselect_entry)
-    self._post_1_right_frame.clicked.connect(
-      self._post_2_left_frame.unselect_entry)
-    self._post_1_right_frame.clicked.connect(
-      self._post_2_right_frame.unselect_entry)
-    self._post_2_left_frame.clicked.connect(
-      self._post_1_left_frame.unselect_entry)
-    self._post_2_left_frame.clicked.connect(
-      self._post_1_right_frame.unselect_entry)
-    self._post_2_left_frame.clicked.connect(
-      self._post_2_right_frame.unselect_entry)
-    self._post_2_right_frame.clicked.connect(
-      self._post_1_left_frame.unselect_entry)
-    self._post_2_right_frame.clicked.connect(
-      self._post_1_right_frame.unselect_entry)
-    self._post_2_right_frame.clicked.connect(
-      self._post_2_left_frame.unselect_entry)
+    self._post_1_l_frame.clicked.connect(self._post_1_r_frame.unselect_entry)
+    self._post_1_l_frame.clicked.connect(self._post_2_l_frame.unselect_entry)
+    self._post_1_l_frame.clicked.connect(self._post_2_r_frame.unselect_entry)
+    self._post_1_r_frame.clicked.connect(self._post_1_l_frame.unselect_entry)
+    self._post_1_r_frame.clicked.connect(self._post_2_l_frame.unselect_entry)
+    self._post_1_r_frame.clicked.connect(self._post_2_r_frame.unselect_entry)
+    self._post_2_l_frame.clicked.connect(self._post_1_l_frame.unselect_entry)
+    self._post_2_l_frame.clicked.connect(self._post_1_r_frame.unselect_entry)
+    self._post_2_l_frame.clicked.connect(self._post_2_r_frame.unselect_entry)
+    self._post_2_r_frame.clicked.connect(self._post_1_l_frame.unselect_entry)
+    self._post_2_r_frame.clicked.connect(self._post_1_r_frame.unselect_entry)
+    self._post_2_r_frame.clicked.connect(self._post_2_l_frame.unselect_entry)
 
-    self._post_1_left_frame.switch_to_next.connect(
-      self._post_1_right_frame.software_select)
-    self._post_1_right_frame.switch_to_next.connect(
-      self._post_2_left_frame.software_select)
-    self._post_2_left_frame.switch_to_next.connect(
-      self._post_2_right_frame.software_select)
-    self._post_2_right_frame.switch_to_next.connect(
-      self._post_1_left_frame.software_select)
+    self._post_1_l_frame.switch_next.connect(self._post_1_r_frame.soft_select)
+    self._post_1_r_frame.switch_next.connect(self._post_2_l_frame.soft_select)
+    self._post_2_l_frame.switch_next.connect(self._post_2_r_frame.soft_select)
+    self._post_2_r_frame.switch_next.connect(self._post_1_l_frame.soft_select)
 
   @pyqtSlot(int)
   def send_highlight_circle_to_scene(self, value: int) -> None:
