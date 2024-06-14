@@ -328,6 +328,7 @@ class SinglePostFrame(QFrame, QWidget):
   """"""
 
   clicked = pyqtSignal(int)
+  switch_to_next = pyqtSignal()
 
   def __init__(self, label: str, index: int) -> None:
     """"""
@@ -336,7 +337,7 @@ class SinglePostFrame(QFrame, QWidget):
     QWidget.__init__(self)
 
     self.selected: bool = False
-    self._index: int = index
+    self.index: int = index
 
     # Setting attributes of the main frame
     self.setLineWidth(1)
@@ -393,7 +394,13 @@ class SinglePostFrame(QFrame, QWidget):
   def mouseReleaseEvent(self, event: QMouseEvent) -> None:
     """"""
 
-    self.clicked.emit(self._index)
+    self.clicked.emit(self.index)
+
+  @pyqtSlot()
+  def software_select(self) -> None:
+    """"""
+
+    self.clicked.emit(self.index)
 
   @pyqtSlot(int)
   def select_entry(self, _: int) -> None:
@@ -409,11 +416,11 @@ class SinglePostFrame(QFrame, QWidget):
     self.selected = False
     self.setLineWidth(1)
 
-  @pyqtSlot(int, int, int)
-  def update_selected_text(self, x: int, y: int, r: int):
+  @pyqtSlot(int, int, int, int)
+  def update_text(self, index: int, x: int, y: int, r: int):
     """"""
 
-    if not self.selected:
+    if index != self.index:
       return
 
     self._x_label.setText(f'X: {x}')
@@ -422,6 +429,8 @@ class SinglePostFrame(QFrame, QWidget):
       self._r_label.setText(f'R: {r}')
     else:
       self._r_label.setText('R: N/A')
+
+    self.switch_to_next.emit()
 
   @pyqtSlot()
   def reset_text(self) -> None:
@@ -436,7 +445,7 @@ class PostsParentFrame(QFrame):
   """"""
 
   post_selected_in_table = pyqtSignal(int)
-  circle_updated_in_scene = pyqtSignal(int, int, int)
+  spot_params_updated = pyqtSignal(int, int, int, int)
   reset_text_requested = pyqtSignal()
 
   def __init__(self) -> None:
@@ -479,14 +488,11 @@ class PostsParentFrame(QFrame):
     self._post_1_left_frame.selected = True
     self._post_1_left_frame.setLineWidth(3)
 
-    self.circle_updated_in_scene.connect(
-      self._post_1_left_frame.update_selected_text)
-    self.circle_updated_in_scene.connect(
-      self._post_1_right_frame.update_selected_text)
-    self.circle_updated_in_scene.connect(
-      self._post_2_left_frame.update_selected_text)
-    self.circle_updated_in_scene.connect(
-      self._post_2_right_frame.update_selected_text)
+    self.spot_params_updated.connect(self._post_1_left_frame.update_text)
+    self.spot_params_updated.connect(self._post_1_right_frame.update_text)
+    self.spot_params_updated.connect(self._post_2_left_frame.update_text)
+    self.spot_params_updated.connect(self._post_2_right_frame.update_text)
+
     self.reset_text_requested.connect(self._post_1_left_frame.reset_text)
     self.reset_text_requested.connect(self._post_1_right_frame.reset_text)
     self.reset_text_requested.connect(self._post_2_left_frame.reset_text)
@@ -517,6 +523,15 @@ class PostsParentFrame(QFrame):
     self._post_2_right_frame.clicked.connect(
       self._post_2_left_frame.unselect_entry)
 
+    self._post_1_left_frame.switch_to_next.connect(
+      self._post_1_right_frame.software_select)
+    self._post_1_right_frame.switch_to_next.connect(
+      self._post_2_left_frame.software_select)
+    self._post_2_left_frame.switch_to_next.connect(
+      self._post_2_right_frame.software_select)
+    self._post_2_right_frame.switch_to_next.connect(
+      self._post_1_left_frame.software_select)
+
   @pyqtSlot(int)
   def send_highlight_circle_to_scene(self, value: int) -> None:
     """"""
@@ -524,10 +539,10 @@ class PostsParentFrame(QFrame):
     self.post_selected_in_table.emit(value)
 
   @pyqtSlot(int, int, int)
-  def update_selected_post_text(self, x: int, y: int, r: int) -> None:
+  def update_post_text(self, x: int, y: int, r: int) -> None:
     """"""
 
-    self.circle_updated_in_scene.emit(x, y, r)
+    self.spot_params_updated.emit(self.selected, x, y, r)
 
   @pyqtSlot(Quadrant)
   def load_text(self, quadrant: Quadrant) -> None:
@@ -535,33 +550,37 @@ class PostsParentFrame(QFrame):
 
     if quadrant.well_1.spot_1 is not None:
       spot = quadrant.well_1.spot_1
-      self._post_1_left_frame.clicked.emit(0)
-      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
-                                        if spot.radius is not None else -1)
+      self.spot_params_updated.emit(0, spot.x, spot.y, spot.radius
+                                    if spot.radius is not None else -1)
 
     if quadrant.well_1.spot_1 is not None:
       spot = quadrant.well_1.spot_2
-      self._post_1_right_frame.clicked.emit(1)
-      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
-                                        if spot.radius is not None else -1)
+      self.spot_params_updated.emit(1, spot.x, spot.y, spot.radius
+                                    if spot.radius is not None else -1)
 
     if quadrant.well_2.spot_1 is not None:
       spot = quadrant.well_2.spot_1
-      self._post_2_left_frame.clicked.emit(2)
-      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
-                                        if spot.radius is not None else -1)
+      self.spot_params_updated.emit(2, spot.x, spot.y, spot.radius
+                                    if spot.radius is not None else -1)
 
     if quadrant.well_2.spot_2 is not None:
       spot = quadrant.well_2.spot_2
-      self._post_2_right_frame.clicked.emit(3)
-      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
-                                        if spot.radius is not None else -1)
+      self.spot_params_updated.emit(3, spot.x, spot.y, spot.radius
+                                    if spot.radius is not None else -1)
 
   @pyqtSlot()
   def reset_text(self) -> None:
     """"""
 
     self.reset_text_requested.emit()
+
+  @property
+  def selected(self) -> int:
+    """"""
+
+    for frame in self._frames:
+      if frame.selected:
+        return frame.index
 
 
 class MainWindow(QMainWindow):
@@ -675,7 +694,7 @@ class MainWindow(QMainWindow):
     self._posts_table.post_selected_in_table.connect(
       self._scene.highlight_selected_circle_in_scene)
     self._scene.post_detected_in_scene.connect(
-      self._posts_table.update_selected_post_text)
+      self._posts_table.update_post_text)
 
     # Process button
     self._process_button = QPushButton()
