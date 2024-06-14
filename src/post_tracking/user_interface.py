@@ -159,7 +159,7 @@ class CustomScene(QGraphicsScene):
                                                  self._circle_2_left_item,
                                                  self._circle_2_right_item]
 
-  def update_circles(self) -> None:
+  def update_circles(self, *_, **__) -> None:
     """"""
 
     if (self._quadrant.well_1.spot_1 is not None
