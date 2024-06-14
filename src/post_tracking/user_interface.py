@@ -412,7 +412,7 @@ class SinglePostFrame(QFrame, QWidget):
 
     self._x_label.setText('X: N/A')
     self._y_label.setText('Y: N/A')
-    self._y_label.setText('R: N/A')
+    self._r_label.setText('R: N/A')
 
 
 class PostsParentFrame(QFrame):
