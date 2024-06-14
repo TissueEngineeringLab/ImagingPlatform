@@ -585,6 +585,8 @@ class MainWindow(QMainWindow):
 
     self._path = Path(folder)
     images = sorted(self._path.glob('*.jpg'), key=path_to_time)
+
+    self._timepoints.clear()
     for path_1, path_2, path_3, path_4 in batched(images, 4):
       self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
                                                     path_3, path_4))
