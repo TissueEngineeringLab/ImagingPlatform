@@ -200,6 +200,19 @@ class CustomScene(QGraphicsScene):
                                      spot.y + spot.radius)
       self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
+  @pyqtSlot()
+  def reset_circles(self) -> None:
+    """"""
+
+    self._circle_1_left.setCoords(0, 0, 0, 0)
+    self._circle_1_left_item.setRect(self._circle_1_left.normalized())
+    self._circle_1_right.setCoords(0, 0, 0, 0)
+    self._circle_1_right_item.setRect(self._circle_1_right.normalized())
+    self._circle_2_left.setCoords(0, 0, 0, 0)
+    self._circle_2_left_item.setRect(self._circle_2_left.normalized())
+    self._circle_2_right.setCoords(0, 0, 0, 0)
+    self._circle_2_right_item.setRect(self._circle_2_right.normalized())
+
   @pyqtSlot(int)
   def highlight_selected_circle(self, value: int) -> None:
     """"""
@@ -393,12 +406,21 @@ class SinglePostFrame(QFrame, QWidget):
     else:
       self._r_label.setText('R: N/A')
 
+  @pyqtSlot()
+  def reset_text(self) -> None:
+    """"""
+
+    self._x_label.setText('X: N/A')
+    self._y_label.setText('Y: N/A')
+    self._y_label.setText('R: N/A')
+
 
 class PostsParentFrame(QFrame):
   """"""
 
   post_selected = pyqtSignal(int)
   circle_updated = pyqtSignal(int, int, int)
+  text_reset = pyqtSignal()
 
   def __init__(self) -> None:
     """"""
@@ -440,6 +462,10 @@ class PostsParentFrame(QFrame):
     self.circle_updated.connect(self._post_1_right_frame.update_text)
     self.circle_updated.connect(self._post_2_left_frame.update_text)
     self.circle_updated.connect(self._post_2_right_frame.update_text)
+    self.text_reset.connect(self._post_1_left_frame.reset_text)
+    self.text_reset.connect(self._post_1_right_frame.reset_text)
+    self.text_reset.connect(self._post_2_left_frame.reset_text)
+    self.text_reset.connect(self._post_2_right_frame.reset_text)
 
   @pyqtSlot(int)
   def highlight_selected_frame(self, value: int) -> None:
@@ -459,6 +485,12 @@ class PostsParentFrame(QFrame):
     """"""
 
     self.circle_updated.emit(x, y, r)
+
+  @pyqtSlot()
+  def reset_text(self) -> None:
+    """"""
+
+    self.text_reset.emit()
 
 
 class MainWindow(QMainWindow):
@@ -481,6 +513,8 @@ class MainWindow(QMainWindow):
     self._timepoints: List[TimePoint] = list()
 
     self.images_loaded.connect(self._scene.reload_image)
+    self.images_loaded.connect(self._scene.reset_circles)
+    self.images_loaded.connect(self._posts_list.reset_text)
     self.images_loaded.connect(self._scene.draw_circles)
 
   def _set_layout(self) -> None:
