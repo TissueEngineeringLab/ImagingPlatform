@@ -535,25 +535,25 @@ class PostsParentFrame(QFrame):
 
     if quadrant.well_1.spot_1 is not None:
       spot = quadrant.well_1.spot_1
-      self._post_1_left_frame.clicked.emit()
+      self._post_1_left_frame.clicked.emit(0)
       self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
                                         if spot.radius is not None else -1)
 
     if quadrant.well_1.spot_1 is not None:
       spot = quadrant.well_1.spot_2
-      self._post_1_right_frame.clicked.emit()
+      self._post_1_right_frame.clicked.emit(1)
       self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
                                         if spot.radius is not None else -1)
 
     if quadrant.well_2.spot_1 is not None:
       spot = quadrant.well_2.spot_1
-      self._post_2_left_frame.clicked.emit()
+      self._post_2_left_frame.clicked.emit(2)
       self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
                                         if spot.radius is not None else -1)
 
     if quadrant.well_2.spot_2 is not None:
       spot = quadrant.well_2.spot_2
-      self._post_2_right_frame.clicked.emit()
+      self._post_2_right_frame.clicked.emit(3)
       self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
                                         if spot.radius is not None else -1)
 
