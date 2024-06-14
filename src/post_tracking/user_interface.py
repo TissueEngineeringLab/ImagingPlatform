@@ -75,6 +75,8 @@ class CustomScene(QGraphicsScene):
     self._zoom_factor: float = 1.3
     self._zoom_level: float = 1.0
 
+    self.detected.connect(self.update_circles)
+
   def wheelEvent(self, event: QGraphicsSceneWheelEvent):
     """"""
 
@@ -251,7 +253,6 @@ class CustomScene(QGraphicsScene):
           self._quadrant.well_2.spot_1 = detected
         elif self._selected_index == 3:
           self._quadrant.well_2.spot_2 = detected
-        self.update_circles()
         self.detected.emit(self._selected_index, detected.x, detected.y,
                            detected.radius if detected.radius is not None
                            else -1)
