@@ -371,6 +371,8 @@ class SinglePostFrame(QFrame, QWidget):
     self._r_label.setMinimumWidth(60)
     self._h_layout.addWidget(self._r_label)
 
+    self.clicked.connect(self.select)
+
   def enterEvent(self, event: QEnterEvent):
     """"""
 
@@ -388,9 +390,21 @@ class SinglePostFrame(QFrame, QWidget):
   def mouseReleaseEvent(self, event: QMouseEvent) -> None:
     """"""
 
+    self.clicked.emit(self._index)
+
+  @pyqtSlot(int)
+  def select(self, _: int) -> None:
+    """"""
+
     self.selected = True
     self.setLineWidth(3)
-    self.clicked.emit(self._index)
+
+  @pyqtSlot(int)
+  def unselect(self, _: int) -> None:
+    """"""
+
+    self.selected = False
+    self.setLineWidth(1)
 
   @pyqtSlot(int, int, int)
   def update_text(self, x: int, y: int, r: int):
@@ -433,19 +447,19 @@ class PostsParentFrame(QFrame):
 
     # Each detectable spot gets its own frame
     self._post_1_left_frame = SinglePostFrame('Left Well, Left Post', 0)
-    self._post_1_left_frame.clicked.connect(self.highlight_selected_frame)
+    self._post_1_left_frame.clicked.connect(self.send_highlight_circle)
     self._posts_layout.addWidget(self._post_1_left_frame)
 
     self._post_1_right_frame = SinglePostFrame('Left Well, Right Post', 1)
-    self._post_1_right_frame.clicked.connect(self.highlight_selected_frame)
+    self._post_1_right_frame.clicked.connect(self.send_highlight_circle)
     self._posts_layout.addWidget(self._post_1_right_frame)
 
     self._post_2_left_frame = SinglePostFrame('Right Well, Left Post', 2)
-    self._post_2_left_frame.clicked.connect(self.highlight_selected_frame)
+    self._post_2_left_frame.clicked.connect(self.send_highlight_circle)
     self._posts_layout.addWidget(self._post_2_left_frame)
 
     self._post_2_right_frame = SinglePostFrame('Right Well, Right Post', 3)
-    self._post_2_right_frame.clicked.connect(self.highlight_selected_frame)
+    self._post_2_right_frame.clicked.connect(self.send_highlight_circle)
     self._posts_layout.addWidget(self._post_2_right_frame)
 
     self._spacer_frame = QFrame()
@@ -467,16 +481,22 @@ class PostsParentFrame(QFrame):
     self.text_reset.connect(self._post_2_left_frame.reset_text)
     self.text_reset.connect(self._post_2_right_frame.reset_text)
 
+    self._post_1_left_frame.clicked.connect(self._post_1_right_frame.unselect)
+    self._post_1_left_frame.clicked.connect(self._post_2_left_frame.unselect)
+    self._post_1_left_frame.clicked.connect(self._post_2_right_frame.unselect)
+    self._post_1_right_frame.clicked.connect(self._post_1_left_frame.unselect)
+    self._post_1_right_frame.clicked.connect(self._post_2_left_frame.unselect)
+    self._post_1_right_frame.clicked.connect(self._post_2_right_frame.unselect)
+    self._post_2_left_frame.clicked.connect(self._post_1_left_frame.unselect)
+    self._post_2_left_frame.clicked.connect(self._post_1_right_frame.unselect)
+    self._post_2_left_frame.clicked.connect(self._post_2_right_frame.unselect)
+    self._post_2_right_frame.clicked.connect(self._post_1_left_frame.unselect)
+    self._post_2_right_frame.clicked.connect(self._post_1_right_frame.unselect)
+    self._post_2_right_frame.clicked.connect(self._post_2_left_frame.unselect)
+
   @pyqtSlot(int)
-  def highlight_selected_frame(self, value: int) -> None:
+  def send_highlight_circle(self, value: int) -> None:
     """"""
-
-    for frame in self._frames:
-      frame.selected = False
-      frame.setLineWidth(1)
-
-    self._frames[value].selected = True
-    self._frames[value].setLineWidth(3)
 
     self.post_selected.emit(value)
 
