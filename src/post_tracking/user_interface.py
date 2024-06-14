@@ -23,7 +23,7 @@ from _structure import TimePoint, path_to_time, Quadrant
 class CustomScene(QGraphicsScene):
   """"""
 
-  post_detected = pyqtSignal(int, int, int)
+  post_detected_in_scene = pyqtSignal(int, int, int)
 
   def __init__(self, view: QGraphicsView) -> None:
     """"""
@@ -75,7 +75,7 @@ class CustomScene(QGraphicsScene):
     self._zoom_factor: float = 1.3
     self._zoom_level: float = 1.0
 
-    self.post_detected.connect(self.draw_circles)
+    self.post_detected_in_scene.connect(self.draw_circles_in_scene)
 
   def wheelEvent(self, event: QGraphicsSceneWheelEvent):
     """"""
@@ -125,7 +125,7 @@ class CustomScene(QGraphicsScene):
       super().mousePressEvent(event)
 
   @pyqtSlot(Quadrant)
-  def reload_image(self, quadrant: Quadrant) -> None:
+  def reload_image_in_scene(self, quadrant: Quadrant) -> None:
     """"""
 
     self._quadrant = quadrant
@@ -161,7 +161,7 @@ class CustomScene(QGraphicsScene):
                                                  self._circle_2_right_item]
 
   @pyqtSlot()
-  def draw_circles(self, *_, **__) -> None:
+  def draw_circles_in_scene(self, *_, **__) -> None:
     """"""
 
     if (self._quadrant.well_1.spot_1 is not None
@@ -201,7 +201,7 @@ class CustomScene(QGraphicsScene):
       self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
   @pyqtSlot()
-  def reset_circles(self) -> None:
+  def reset_circles_in_scene(self) -> None:
     """"""
 
     self._circle_1_left.setCoords(0, 0, 0, 0)
@@ -214,7 +214,7 @@ class CustomScene(QGraphicsScene):
     self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
   @pyqtSlot(int)
-  def highlight_selected_circle(self, value: int) -> None:
+  def highlight_selected_circle_in_scene(self, value: int) -> None:
     """"""
 
     self._selected_index = value
@@ -268,9 +268,9 @@ class CustomScene(QGraphicsScene):
           self._quadrant.well_2.spot_1 = detected
         elif self._selected_index == 3:
           self._quadrant.well_2.spot_2 = detected
-        self.post_detected.emit(detected.x, detected.y,
-                                detected.radius if detected.radius is not None
-                                else -1)
+        self.post_detected_in_scene.emit(detected.x, detected.y,
+                                         detected.radius if detected.radius
+                                         is not None else -1)
 
       self._rect_item.hide()
       self._select_rect.setCoords(0, 0, 0, 0)
@@ -371,7 +371,7 @@ class SinglePostFrame(QFrame, QWidget):
     self._r_label.setMinimumWidth(60)
     self._h_layout.addWidget(self._r_label)
 
-    self.clicked.connect(self.select)
+    self.clicked.connect(self.select_entry)
 
   def enterEvent(self, event: QEnterEvent):
     """"""
@@ -393,14 +393,14 @@ class SinglePostFrame(QFrame, QWidget):
     self.clicked.emit(self._index)
 
   @pyqtSlot(int)
-  def select(self, _: int) -> None:
+  def select_entry(self, _: int) -> None:
     """"""
 
     self.selected = True
     self.setLineWidth(3)
 
   @pyqtSlot(int)
-  def unselect(self, _: int) -> None:
+  def unselect_entry(self, _: int) -> None:
     """"""
 
     self.selected = False
@@ -443,9 +443,9 @@ class SinglePostFrame(QFrame, QWidget):
 class PostsParentFrame(QFrame):
   """"""
 
-  post_selected = pyqtSignal(int)
-  selected_circle_updated = pyqtSignal(int, int, int)
-  text_reset = pyqtSignal()
+  post_selected_in_table = pyqtSignal(int)
+  circle_updated_in_scene = pyqtSignal(int, int, int)
+  reset_text_requested = pyqtSignal()
 
   def __init__(self) -> None:
     """"""
@@ -458,19 +458,23 @@ class PostsParentFrame(QFrame):
 
     # Each detectable spot gets its own frame
     self._post_1_left_frame = SinglePostFrame('Left Well, Left Post', 0)
-    self._post_1_left_frame.clicked.connect(self.send_highlight_circle)
+    self._post_1_left_frame.clicked.connect(
+      self.send_highlight_circle_to_scene)
     self._posts_layout.addWidget(self._post_1_left_frame)
 
     self._post_1_right_frame = SinglePostFrame('Left Well, Right Post', 1)
-    self._post_1_right_frame.clicked.connect(self.send_highlight_circle)
+    self._post_1_right_frame.clicked.connect(
+      self.send_highlight_circle_to_scene)
     self._posts_layout.addWidget(self._post_1_right_frame)
 
     self._post_2_left_frame = SinglePostFrame('Right Well, Left Post', 2)
-    self._post_2_left_frame.clicked.connect(self.send_highlight_circle)
+    self._post_2_left_frame.clicked.connect(
+      self.send_highlight_circle_to_scene)
     self._posts_layout.addWidget(self._post_2_left_frame)
 
     self._post_2_right_frame = SinglePostFrame('Right Well, Right Post', 3)
-    self._post_2_right_frame.clicked.connect(self.send_highlight_circle)
+    self._post_2_right_frame.clicked.connect(
+      self.send_highlight_circle_to_scene)
     self._posts_layout.addWidget(self._post_2_right_frame)
 
     self._spacer_frame = QFrame()
@@ -483,49 +487,61 @@ class PostsParentFrame(QFrame):
     self._post_1_left_frame.selected = True
     self._post_1_left_frame.setLineWidth(3)
 
-    self.selected_circle_updated.connect(
+    self.circle_updated_in_scene.connect(
       self._post_1_left_frame.update_selected_text)
-    self.selected_circle_updated.connect(
+    self.circle_updated_in_scene.connect(
       self._post_1_right_frame.update_selected_text)
-    self.selected_circle_updated.connect(
+    self.circle_updated_in_scene.connect(
       self._post_2_left_frame.update_selected_text)
-    self.selected_circle_updated.connect(
+    self.circle_updated_in_scene.connect(
       self._post_2_right_frame.update_selected_text)
-    self.text_reset.connect(self._post_1_left_frame.reset_text)
-    self.text_reset.connect(self._post_1_right_frame.reset_text)
-    self.text_reset.connect(self._post_2_left_frame.reset_text)
-    self.text_reset.connect(self._post_2_right_frame.reset_text)
+    self.reset_text_requested.connect(self._post_1_left_frame.reset_text)
+    self.reset_text_requested.connect(self._post_1_right_frame.reset_text)
+    self.reset_text_requested.connect(self._post_2_left_frame.reset_text)
+    self.reset_text_requested.connect(self._post_2_right_frame.reset_text)
 
-    self._post_1_left_frame.clicked.connect(self._post_1_right_frame.unselect)
-    self._post_1_left_frame.clicked.connect(self._post_2_left_frame.unselect)
-    self._post_1_left_frame.clicked.connect(self._post_2_right_frame.unselect)
-    self._post_1_right_frame.clicked.connect(self._post_1_left_frame.unselect)
-    self._post_1_right_frame.clicked.connect(self._post_2_left_frame.unselect)
-    self._post_1_right_frame.clicked.connect(self._post_2_right_frame.unselect)
-    self._post_2_left_frame.clicked.connect(self._post_1_left_frame.unselect)
-    self._post_2_left_frame.clicked.connect(self._post_1_right_frame.unselect)
-    self._post_2_left_frame.clicked.connect(self._post_2_right_frame.unselect)
-    self._post_2_right_frame.clicked.connect(self._post_1_left_frame.unselect)
-    self._post_2_right_frame.clicked.connect(self._post_1_right_frame.unselect)
-    self._post_2_right_frame.clicked.connect(self._post_2_left_frame.unselect)
+    self._post_1_left_frame.clicked.connect(
+      self._post_1_right_frame.unselect_entry)
+    self._post_1_left_frame.clicked.connect(
+      self._post_2_left_frame.unselect_entry)
+    self._post_1_left_frame.clicked.connect(
+      self._post_2_right_frame.unselect_entry)
+    self._post_1_right_frame.clicked.connect(
+      self._post_1_left_frame.unselect_entry)
+    self._post_1_right_frame.clicked.connect(
+      self._post_2_left_frame.unselect_entry)
+    self._post_1_right_frame.clicked.connect(
+      self._post_2_right_frame.unselect_entry)
+    self._post_2_left_frame.clicked.connect(
+      self._post_1_left_frame.unselect_entry)
+    self._post_2_left_frame.clicked.connect(
+      self._post_1_right_frame.unselect_entry)
+    self._post_2_left_frame.clicked.connect(
+      self._post_2_right_frame.unselect_entry)
+    self._post_2_right_frame.clicked.connect(
+      self._post_1_left_frame.unselect_entry)
+    self._post_2_right_frame.clicked.connect(
+      self._post_1_right_frame.unselect_entry)
+    self._post_2_right_frame.clicked.connect(
+      self._post_2_left_frame.unselect_entry)
 
   @pyqtSlot(int)
-  def send_highlight_circle(self, value: int) -> None:
+  def send_highlight_circle_to_scene(self, value: int) -> None:
     """"""
 
-    self.post_selected.emit(value)
+    self.post_selected_in_table.emit(value)
 
   @pyqtSlot(int, int, int)
-  def update_selected_text(self, x: int, y: int, r: int) -> None:
+  def update_selected_post_text(self, x: int, y: int, r: int) -> None:
     """"""
 
-    self.selected_circle_updated.emit(x, y, r)
+    self.circle_updated_in_scene.emit(x, y, r)
 
   @pyqtSlot()
   def reset_text(self) -> None:
     """"""
 
-    self.text_reset.emit()
+    self.reset_text_requested.emit()
 
 
 class MainWindow(QMainWindow):
@@ -547,10 +563,10 @@ class MainWindow(QMainWindow):
     self._img_folder: Optional[Path] = None
     self._timepoints: List[TimePoint] = list()
 
-    self.images_loaded.connect(self._scene.reload_image)
-    self.images_loaded.connect(self._scene.reset_circles)
-    self.images_loaded.connect(self._posts_list.reset_text)
-    self.images_loaded.connect(self._scene.draw_circles)
+    self.images_loaded.connect(self._scene.reload_image_in_scene)
+    self.images_loaded.connect(self._scene.reset_circles_in_scene)
+    self.images_loaded.connect(self._posts_table.reset_text)
+    self.images_loaded.connect(self._scene.draw_circles_in_scene)
 
   def _set_layout(self) -> None:
     """"""
@@ -562,7 +578,7 @@ class MainWindow(QMainWindow):
 
     # Title bar on left panel
     self._load_images_button = QPushButton('Load Images')
-    self._load_images_button.clicked.connect(self._load_images)
+    self._load_images_button.clicked.connect(self.load_images)
     self._load_images_button.setFixedSize(QSize(130, 29))
     self._left_title_bar.addWidget(self._load_images_button)
 
@@ -632,12 +648,13 @@ class MainWindow(QMainWindow):
     self._right_panel_layout.addWidget(self._right_label)
 
     # Scrollable area containing the information on the detected spots
-    self._posts_list = PostsParentFrame()
-    self._posts_list.setMinimumHeight(350)
-    self._right_panel_layout.addWidget(self._posts_list)
-    self._posts_list.post_selected.connect(
-      self._scene.highlight_selected_circle)
-    self._scene.post_detected.connect(self._posts_list.update_selected_text)
+    self._posts_table = PostsParentFrame()
+    self._posts_table.setMinimumHeight(350)
+    self._right_panel_layout.addWidget(self._posts_table)
+    self._posts_table.post_selected_in_table.connect(
+      self._scene.highlight_selected_circle_in_scene)
+    self._scene.post_detected_in_scene.connect(
+      self._posts_table.update_selected_post_text)
 
     # Process button
     self._process_button = QPushButton()
@@ -650,15 +667,14 @@ class MainWindow(QMainWindow):
     self._main_widget.setLayout(self._main_layout)
 
   @pyqtSlot()
-  def _load_images(self) -> None:
+  def load_images(self) -> None:
     """"""
 
     folder = QFileDialog.getExistingDirectory(self, "Select Image Directory")
     if not folder:
       return
 
-    self._path = Path(folder)
-    images = sorted(self._path.glob('*.jpg'), key=path_to_time)
+    images = sorted(Path(folder).glob('*.jpg'), key=path_to_time)
 
     self._timepoints.clear()
     for path_1, path_2, path_3, path_4 in batched(images, 4):
