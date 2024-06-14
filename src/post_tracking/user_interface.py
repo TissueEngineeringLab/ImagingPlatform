@@ -420,17 +420,6 @@ class SinglePostFrame(QFrame, QWidget):
     else:
       self._r_label.setText('R: N/A')
 
-  @pyqtSlot(int, int, int)
-  def update_text(self, x: int, y: int, r: int):
-    """"""
-
-    self._x_label.setText(f'X: {x}')
-    self._y_label.setText(f'Y: {y}')
-    if r > 0:
-      self._r_label.setText(f'R: {r}')
-    else:
-      self._r_label.setText('R: N/A')
-
   @pyqtSlot()
   def reset_text(self) -> None:
     """"""
@@ -537,6 +526,34 @@ class PostsParentFrame(QFrame):
 
     self.circle_updated_in_scene.emit(x, y, r)
 
+  @pyqtSlot(Quadrant)
+  def load_text(self, quadrant: Quadrant) -> None:
+    """"""
+
+    if quadrant.well_1.spot_1 is not None:
+      spot = quadrant.well_1.spot_1
+      self._post_1_left_frame.clicked.emit()
+      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
+                                        if spot.radius is not None else -1)
+
+    if quadrant.well_1.spot_1 is not None:
+      spot = quadrant.well_1.spot_2
+      self._post_1_right_frame.clicked.emit()
+      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
+                                        if spot.radius is not None else -1)
+
+    if quadrant.well_2.spot_1 is not None:
+      spot = quadrant.well_2.spot_1
+      self._post_2_left_frame.clicked.emit()
+      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
+                                        if spot.radius is not None else -1)
+
+    if quadrant.well_2.spot_2 is not None:
+      spot = quadrant.well_2.spot_2
+      self._post_2_right_frame.clicked.emit()
+      self.circle_updated_in_scene.emit(spot.x, spot.y, spot.radius
+                                        if spot.radius is not None else -1)
+
   @pyqtSlot()
   def reset_text(self) -> None:
     """"""
@@ -547,7 +564,7 @@ class PostsParentFrame(QFrame):
 class MainWindow(QMainWindow):
   """"""
 
-  images_loaded = pyqtSignal(Quadrant)
+  image_loaded = pyqtSignal(Quadrant)
 
   def __init__(self) -> None:
     """"""
@@ -563,10 +580,11 @@ class MainWindow(QMainWindow):
     self._img_folder: Optional[Path] = None
     self._timepoints: List[TimePoint] = list()
 
-    self.images_loaded.connect(self._scene.reload_image_in_scene)
-    self.images_loaded.connect(self._scene.reset_circles_in_scene)
-    self.images_loaded.connect(self._posts_table.reset_text)
-    self.images_loaded.connect(self._scene.draw_circles_in_scene)
+    self.image_loaded.connect(self._scene.reload_image_in_scene)
+    self.image_loaded.connect(self._scene.reset_circles_in_scene)
+    self.image_loaded.connect(self._posts_table.reset_text)
+    self.image_loaded.connect(self._scene.draw_circles_in_scene)
+    self.image_loaded.connect(self._posts_table.load_text)
 
   def _set_layout(self) -> None:
     """"""
@@ -681,7 +699,7 @@ class MainWindow(QMainWindow):
       self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
                                                     path_3, path_4))
 
-    self.images_loaded.emit(self._timepoints[0].A)
+    self.image_loaded.emit(self._timepoints[0].A)
 
 
 if __name__ == "__main__":
