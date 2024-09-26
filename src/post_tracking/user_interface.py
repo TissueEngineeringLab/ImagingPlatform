@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                              QGraphicsView, QProgressBar, QGraphicsScene,
                              QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QFileDialog, QFrame,
-                             QGraphicsEllipseItem)
+                             QGraphicsEllipseItem, QStyle)
 import sys
 from typing import Optional
 from pathlib import Path
@@ -227,6 +227,23 @@ class CustomScene(QGraphicsScene):
 
     self._circles[value].setBrush(self._circle_brush_selected)
 
+  @pyqtSlot(int)
+  def delete_circle_in_scene(self, index: int) -> None:
+    """"""
+
+    if index == 0:
+      self._circle_1_left.setCoords(0, 0, 0, 0)
+      self._circle_1_left_item.setRect(self._circle_1_left.normalized())
+    elif index == 1:
+      self._circle_1_right.setCoords(0, 0, 0, 0)
+      self._circle_1_right_item.setRect(self._circle_1_right.normalized())
+    elif index == 2:
+      self._circle_2_left.setCoords(0, 0, 0, 0)
+      self._circle_2_left_item.setRect(self._circle_2_left.normalized())
+    elif index == 3:
+      self._circle_2_right.setCoords(0, 0, 0, 0)
+      self._circle_2_right_item.setRect(self._circle_2_right.normalized())
+
   def _leftMousePressEvent(self, event: QGraphicsSceneMouseEvent):
     """"""
 
@@ -329,6 +346,7 @@ class SinglePostFrame(QFrame, QWidget):
 
   clicked = pyqtSignal(int)
   switch_next = pyqtSignal()
+  deleted = pyqtSignal(int)
 
   def __init__(self, label: str, index: int) -> None:
     """"""
@@ -374,6 +392,15 @@ class SinglePostFrame(QFrame, QWidget):
     self._r_label.setFixedHeight(30)
     self._r_label.setMinimumWidth(60)
     self._h_layout.addWidget(self._r_label)
+
+    self._delete_button = QPushButton()
+    self._delete_button.setIcon(self.style().standardIcon(
+      QStyle.StandardPixmap.SP_TrashIcon))
+    self._delete_button.clicked.connect(self.reset_text)
+    self._delete_button.clicked.connect(self.delete_post)
+    self._delete_button.setFixedHeight(30)
+    self._delete_button.setFixedWidth(30)
+    self._h_layout.addWidget(self._delete_button)
 
     self.clicked.connect(self.select_entry)
 
@@ -440,6 +467,12 @@ class SinglePostFrame(QFrame, QWidget):
     self._y_label.setText('Y: N/A')
     self._r_label.setText('R: N/A')
 
+  @pyqtSlot()
+  def delete_post(self) -> None:
+    """"""
+
+    self.deleted.emit(self.index)
+
 
 class PostsParentFrame(QFrame):
   """"""
@@ -447,6 +480,7 @@ class PostsParentFrame(QFrame):
   post_selected_in_table = pyqtSignal(int)
   spot_params_updated = pyqtSignal(int, int, int, int)
   reset_text_requested = pyqtSignal()
+  deleted_post = pyqtSignal(int)
 
   def __init__(self) -> None:
     """"""
@@ -460,18 +494,22 @@ class PostsParentFrame(QFrame):
     # Each detectable spot gets its own frame
     self._post_1_l_frame = SinglePostFrame('Left Well, Left Post', 0)
     self._post_1_l_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._post_1_l_frame.deleted.connect(self.post_deleted)
     self._posts_layout.addWidget(self._post_1_l_frame)
 
     self._post_1_r_frame = SinglePostFrame('Left Well, Right Post', 1)
     self._post_1_r_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._post_1_r_frame.deleted.connect(self.post_deleted)
     self._posts_layout.addWidget(self._post_1_r_frame)
 
     self._post_2_l_frame = SinglePostFrame('Right Well, Left Post', 2)
     self._post_2_l_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._post_2_l_frame.deleted.connect(self.post_deleted)
     self._posts_layout.addWidget(self._post_2_l_frame)
 
     self._post_2_r_frame = SinglePostFrame('Right Well, Right Post', 3)
     self._post_2_r_frame.clicked.connect(self.send_highlight_circle_to_scene)
+    self._post_2_r_frame.deleted.connect(self.post_deleted)
     self._posts_layout.addWidget(self._post_2_r_frame)
 
     self._spacer_frame = QFrame()
@@ -553,6 +591,12 @@ class PostsParentFrame(QFrame):
     """"""
 
     self.reset_text_requested.emit()
+
+  @pyqtSlot(int)
+  def post_deleted(self, index: int) -> None:
+    """"""
+
+    self.deleted_post.emit(index)
 
   @property
   def selected(self) -> int:
@@ -695,6 +739,7 @@ class MainWindow(QMainWindow):
       self._scene.highlight_selected_circle_in_scene)
     self._scene.post_detected_in_scene.connect(
       self._posts_table.update_post_text)
+    self._posts_table.deleted_post.connect(self._scene.delete_circle_in_scene)
 
     # Process button
     self._process_button = QPushButton()
