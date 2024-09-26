@@ -571,7 +571,7 @@ class PostsParentFrame(QFrame):
       self.spot_params_updated.emit(0, spot.x, spot.y, spot.radius
                                     if spot.radius is not None else -1)
 
-    if quadrant.well_1.spot_1 is not None:
+    if quadrant.well_1.spot_2 is not None:
       spot = quadrant.well_1.spot_2
       self.spot_params_updated.emit(1, spot.x, spot.y, spot.radius
                                     if spot.radius is not None else -1)
