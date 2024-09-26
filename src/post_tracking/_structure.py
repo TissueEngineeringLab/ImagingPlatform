@@ -66,6 +66,26 @@ class Well:
   def __iter__(self) -> Iterator[Spot]:
     return iter((self.spot_1, self.spot_2))
 
+  def __getitem__(self, index: int) -> Spot:
+    """"""
+
+    if index in (-2, 0):
+      return self.spot_1
+    elif index in (-1, 1):
+      return self.spot_2
+    else:
+      raise IndexError
+
+  def __setitem__(self, index: int, value: Optional[Spot]) -> None:
+    """"""
+
+    if index in (-2, 0):
+      self.spot_1 = value
+    elif index in (-1, 1):
+      self.spot_2 = value
+    else:
+      raise IndexError
+
 
 @dataclass
 class Quadrant:
@@ -79,6 +99,16 @@ class Quadrant:
 
   def __iter__(self) -> Iterator[Well]:
     return iter((self.well_1, self.well_2))
+
+  def __getitem__(self, index: int) -> Well:
+    """"""
+
+    if index in (-2, 0):
+      return self.well_1
+    elif index in (-1, 1):
+      return self.well_2
+    else:
+      raise IndexError
 
 
 @dataclass
