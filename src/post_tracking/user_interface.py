@@ -737,9 +737,13 @@ class MainWindow(QMainWindow):
     self._right_panel_layout.addWidget(self._posts_table)
     self._posts_table.post_selected_in_table.connect(
       self._scene.highlight_selected_circle_in_scene)
+
     self._scene.post_detected_in_scene.connect(
       self._posts_table.update_post_text)
     self._posts_table.deleted_post.connect(self._scene.delete_circle_in_scene)
+
+    self._posts_table.spot_params_updated.connect(self.update_data)
+    self._posts_table.deleted_post.connect(self.delete_data)
 
     # Process button
     self._process_button = QPushButton()
@@ -750,6 +754,26 @@ class MainWindow(QMainWindow):
     self._main_layout.addLayout(self._right_panel_layout, stretch=1)
     self._main_widget = QWidget()
     self._main_widget.setLayout(self._main_layout)
+
+  @pyqtSlot(int, int, int, int)
+  def update_data(self, index: int, x: int, y: int, r: int) -> None:
+    """"""
+
+    well = index // 2
+    spot = index % 2
+
+    self._timepoints[self._time_idx][self._quadrant][well][spot].x = x
+    self._timepoints[self._time_idx][self._quadrant][well][spot].y = y
+    self._timepoints[self._time_idx][self._quadrant][well][spot].radius = r
+
+  @pyqtSlot(int)
+  def delete_data(self, index: int) -> None:
+    """"""
+
+    well = index // 2
+    spot = index % 2
+
+    self._timepoints[self._time_idx][self._quadrant][well][spot] = None
 
   @pyqtSlot(str)
   def select_time(self, value: str) -> None:
