@@ -19,7 +19,13 @@ def detect_spot(image: np.ndarray, y_1: int,
     return
 
   roi = deepcopy(image[x_1: x_2, y_1: y_2, :])
-  x, y, r = _detect_spot(roi)
+  ret = _detect_spot(roi)
+
+  # Undetected spots are handled elsewhere
+  if ret is None:
+    return
+  else:
+     x, y, r = ret
 
   return Spot(y_1 + y, x_1 + x, r)
 
@@ -31,8 +37,13 @@ def track_spot(image: np.ndarray, spot: Spot, offset: int) -> Optional[Spot]:
                        spot.y + spot.radius + offset,
                        spot.x - spot.radius - offset:
                        spot.x + spot.radius + offset, :])
+  ret = _detect_spot(roi)
 
-  x, y, r = _detect_spot(roi)
+  # Undetected spots are handled elsewhere
+  if ret is None:
+    return
+  else:
+    x, y, r = ret
 
   return Spot(spot.y - spot.radius - offset + y,
               spot.x - spot.radius - offset + x, r)
@@ -60,9 +71,9 @@ def _detect_spot(roi: np.ndarray,
                             minRadius=int(np.min(spot.shape[:2]) / 4),
                             maxRadius=int(np.min(spot.shape[:2]) * 2))
 
+  # Don't return anything if no spot can be detected
   if detect is None:
-    # Todo: handle lost spot instead
-    raise ValueError
+    return
 
   y, x, r = map(int, np.squeeze(detect))
   return y, x, r
