@@ -613,6 +613,7 @@ class MainWindow(QMainWindow):
   image_loaded = pyqtSignal(Quadrant)
   quadrant_changed = pyqtSignal(int)
   time_changed = pyqtSignal(int)
+  data_updated = pyqtSignal()
 
   def __init__(self) -> None:
     """"""
@@ -636,6 +637,8 @@ class MainWindow(QMainWindow):
     self.image_loaded.connect(self._posts_table.reset_text)
     self.image_loaded.connect(self._scene.draw_circles_in_scene)
     self.image_loaded.connect(self._posts_table.load_text)
+
+    self.data_updated.connect(self.enable_process_button)
 
   def _set_layout(self) -> None:
     """"""
@@ -746,7 +749,9 @@ class MainWindow(QMainWindow):
     self._posts_table.deleted_post.connect(self.delete_data)
 
     # Process button
-    self._process_button = QPushButton()
+    self._process_button = QPushButton('Process')
+    self._process_button.clicked.connect(self.process_images)
+    self._process_button.setEnabled(False)
     self._right_panel_layout.addWidget(self._process_button)
 
     # Finalize main layout
@@ -766,6 +771,8 @@ class MainWindow(QMainWindow):
     self._timepoints[self._time_idx][self._quadrant][well][spot].y = y
     self._timepoints[self._time_idx][self._quadrant][well][spot].radius = r
 
+    self.data_updated.emit()
+
   @pyqtSlot(int)
   def delete_data(self, index: int) -> None:
     """"""
@@ -774,6 +781,8 @@ class MainWindow(QMainWindow):
     spot = index % 2
 
     self._timepoints[self._time_idx][self._quadrant][well][spot] = None
+
+    self.data_updated.emit()
 
   @pyqtSlot(str)
   def select_time(self, value: str) -> None:
@@ -885,6 +894,21 @@ class MainWindow(QMainWindow):
     self._time_combo.setEnabled(True)
     self._prev_time_button.setEnabled(True)
     self._next_time_button.setEnabled(True)
+
+  @pyqtSlot()
+  def process_images(self) -> None:
+    """"""
+
+    ...
+
+  @pyqtSlot()
+  def enable_process_button(self) -> None:
+    """"""
+
+    if self._timepoints and any(self._timepoints):
+      self._process_button.setEnabled(True)
+    else:
+      self._process_button.setEnabled(False)
 
 
 if __name__ == "__main__":

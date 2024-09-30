@@ -110,6 +110,11 @@ class Quadrant:
     else:
       raise IndexError
 
+  def __bool__(self) -> bool:
+    """"""
+
+    return self.well_1.is_defined or self.well_2.is_defined
+
 
 @dataclass
 class TimePoint:
@@ -170,3 +175,8 @@ class TimePoint:
 
     else:
       raise AttributeError
+
+  def __bool__(self) -> bool:
+    """"""
+
+    return any((self.A, self.B, self.C, self.D))
