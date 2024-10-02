@@ -37,7 +37,7 @@ def track_spot(image: np.ndarray, spot: Spot, offset: int) -> Optional[Spot]:
                        spot.y + spot.radius + offset,
                        spot.x - spot.radius - offset:
                        spot.x + spot.radius + offset, :])
-  ret = _detect_spot(roi)
+  ret = _detect_spot(roi, prev_rad=spot.radius)
 
   # Undetected spots are handled elsewhere
   if ret is None:
