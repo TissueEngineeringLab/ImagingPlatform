@@ -81,5 +81,9 @@ def _detect_spot(roi: np.ndarray,
   if detect is None:
     return
 
-  y, x, r = map(int, np.squeeze(detect))
+  detect = np.squeeze(detect)
+  if len(detect.shape) > 1:
+    return
+
+  y, x, r = map(int, detect)
   return y, x, r
