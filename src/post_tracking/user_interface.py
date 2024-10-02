@@ -806,7 +806,7 @@ class MainWindow(QMainWindow):
   def next_time(self) -> None:
     """"""
 
-    if self._time_idx >= len(self._timepoints):
+    if self._time_idx >= len(self._timepoints) - 1:
       return
 
     self._time_idx += 1
