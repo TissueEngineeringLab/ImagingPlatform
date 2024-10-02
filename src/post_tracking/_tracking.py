@@ -62,14 +62,20 @@ def _detect_spot(roi: np.ndarray,
                     reverse=True)
   spot = np.zeros_like(roi, dtype=np.uint8)
   cv2.drawContours(spot, contours, 0, (255,), -1)
+
+  min_rad = (int(np.min(spot.shape[:2]) / 4) if prev_rad is None
+             else int(prev_rad * 0.75))
+  max_rad = (int(np.min(spot.shape[:2]) * 2) if prev_rad is None
+             else int(prev_rad * 1.25))
+
   detect = cv2.HoughCircles(spot,
                             cv2.HOUGH_GRADIENT,
                             1.0,
                             np.max(spot.shape[:2]),
                             param1=255,
                             param2=1,
-                            minRadius=int(np.min(spot.shape[:2]) / 4),
-                            maxRadius=int(np.min(spot.shape[:2]) * 2))
+                            minRadius=min_rad,
+                            maxRadius=max_rad)
 
   # Don't return anything if no spot can be detected
   if detect is None:
