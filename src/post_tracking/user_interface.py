@@ -623,6 +623,8 @@ class WorkerSignal(QObject):
   """"""
 
   processing_done = pyqtSignal()
+  track_progress = pyqtSignal(int)
+
 
 class TrackingWorker(QRunnable):
   """"""
@@ -633,14 +635,19 @@ class TrackingWorker(QRunnable):
     super().__init__()
 
     self._parent = main_window
-    self._signal = WorkerSignal()
-    self._signal.processing_done.connect(self._parent.stop_processing)
+    self._signals = WorkerSignal()
+    self._signals.processing_done.connect(self._parent.stop_processing)
+    self._signals.track_progress.connect(self._parent._progress_bar.setValue)
 
   @pyqtSlot()
   def run(self) -> None:
     """"""
 
+    nb_iter = len(self._parent._timepoints) - 1
+
     for i, (prev, current) in enumerate(pairwise(self._parent._timepoints)):
+
+      self._signals.track_progress.emit(int((i + 1) / nb_iter * 1000))
 
       if self._parent._stop_thread:
         return
@@ -692,7 +699,7 @@ class TrackingWorker(QRunnable):
 
           sleep(0.05)
 
-    self._signal.processing_done.emit()
+    self._signals.processing_done.emit()
 
 
 class MainWindow(QMainWindow):
@@ -818,6 +825,7 @@ class MainWindow(QMainWindow):
     self._left_panel_layout.addWidget(self._view)
 
     self._progress_bar = QProgressBar()
+    self._progress_bar.setRange(0, 1000)
     self._left_panel_layout.addWidget(self._progress_bar)
 
     # Right panel
