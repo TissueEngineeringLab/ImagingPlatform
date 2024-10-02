@@ -858,6 +858,9 @@ class MainWindow(QMainWindow):
     well = index // 2
     spot = index % 2
 
+    if self._timepoints[self._time_idx][self._quadrant][well][spot] is None:
+      return
+
     self._timepoints[self._time_idx][self._quadrant][well][spot].x = x
     self._timepoints[self._time_idx][self._quadrant][well][spot].y = y
     self._timepoints[self._time_idx][self._quadrant][well][spot].radius = r
