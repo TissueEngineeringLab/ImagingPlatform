@@ -655,12 +655,9 @@ class TrackingWorker(QRunnable):
         if not prev_quad:
           continue
 
-        # Load the next image before processing it
-        if current_quad.id == self._parent._quadrant:
-          self._parent._time_idx = i + 1
-          self._parent.image_loaded.emit(
-              self._parent._timepoints[i + 1][self._parent._quadrant])
-          self._parent.time_changed.emit(self._parent._time_idx)
+        # Only process one quadrant at a time
+        if current_quad.id != self._parent._quadrant:
+          continue
 
         for prev_well, current_well in zip(prev_quad, current_quad):
 
@@ -671,6 +668,9 @@ class TrackingWorker(QRunnable):
           # Only process wells where at least one post is undefined
           if current_well.is_defined:
             continue
+
+          # Load the image before processing it
+          self._parent._time_combo.setCurrentIndex(i + 1)
 
           self._parent._posts_table.selected = 2 * current_well.id
 
