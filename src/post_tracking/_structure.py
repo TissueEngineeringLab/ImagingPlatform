@@ -44,6 +44,8 @@ class Spot:
 class Well:
   """"""
 
+  id: int
+
   spot_1: Optional[Spot] = None
   spot_2: Optional[Spot] = None
 
@@ -93,9 +95,10 @@ class Quadrant:
 
   path: Path
   acq_time: float
+  id: str
 
-  well_1: Well = field(default_factory=Well)
-  well_2: Well = field(default_factory=Well)
+  well_1: Well = field(default_factory=lambda: Well(0))
+  well_2: Well = field(default_factory=lambda: Well(1))
 
   def __iter__(self) -> Iterator[Well]:
     return iter((self.well_1, self.well_2))
@@ -156,10 +159,15 @@ class TimePoint:
     except AttributeError:
       raise
 
-    return cls(Quadrant(path_a, time_a),
-               Quadrant(path_b, time_b),
-               Quadrant(path_c, time_c),
-               Quadrant(path_d, time_d))
+    return cls(Quadrant(path_a, time_a, 'A'),
+               Quadrant(path_b, time_b, 'B'),
+               Quadrant(path_c, time_c, 'C'),
+               Quadrant(path_d, time_d, 'D'))
+
+  def __iter__(self) -> Iterator[Quadrant]:
+    """"""
+
+    return iter((self.A, self.B, self.C, self.D))
 
   def __getitem__(self, item: str) -> Quadrant:
     """"""
