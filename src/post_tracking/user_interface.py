@@ -1,6 +1,8 @@
 # coding: utf-8
 
-from PyQt6.QtCore import QSize, QRectF, Qt, pyqtSignal, pyqtSlot
+from __future__ import annotations
+from PyQt6.QtCore import (QSize, QRectF, Qt, pyqtSignal, pyqtSlot, QRunnable,
+                          QThreadPool, QObject)
 from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush, QEnterEvent, QMouseEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                              QHBoxLayout, QWidget, QComboBox, QPushButton,
@@ -14,9 +16,10 @@ from pathlib import Path
 from PIL import Image
 import numpy as np
 from typing import List, Dict
-from itertools import batched, count
+from itertools import batched, count, pairwise
+from time import sleep
 
-from _tracking import detect_spot
+from _tracking import detect_spot, track_spot
 from _structure import TimePoint, path_to_time, Quadrant, path_to_str
 
 
@@ -606,6 +609,91 @@ class PostsParentFrame(QFrame):
       if frame.selected:
         return frame.index
 
+  @selected.setter
+  def selected(self, index: int) -> None:
+    """"""
+
+    if index not in range(4):
+      raise ValueError
+
+    self._frames[index].soft_select()
+
+
+class WorkerSignal(QObject):
+  """"""
+
+  processing_done = pyqtSignal()
+
+class TrackingWorker(QRunnable):
+  """"""
+
+  def __init__(self, main_window: MainWindow) -> None:
+    """"""
+
+    super().__init__()
+
+    self._parent = main_window
+    self._signal = WorkerSignal()
+    self._signal.processing_done.connect(self._parent.stop_processing)
+
+  @pyqtSlot()
+  def run(self) -> None:
+    """"""
+
+    for i, (prev, current) in enumerate(pairwise(self._parent._timepoints)):
+
+      if self._parent._stop_thread:
+        return
+
+      # Only start from the first fully defined timepoint
+      if not prev:
+        continue
+
+      for prev_quad, current_quad in zip(prev, current):
+
+        # Only process if there is data for the preceding timepoint
+        if not prev_quad:
+          continue
+
+        # Load the next image before processing it
+        if current_quad.id == self._parent._quadrant:
+          self._parent._time_idx = i + 1
+          self._parent.image_loaded.emit(
+              self._parent._timepoints[i + 1][self._parent._quadrant])
+          self._parent.time_changed.emit(self._parent._time_idx)
+
+        for prev_well, current_well in zip(prev_quad, current_quad):
+
+          # Only process if there is data for the preceding timepoint
+          if not prev_well.is_defined:
+            continue
+
+          # Only process wells where at least one post is undefined
+          if current_well.is_defined:
+            continue
+
+          self._parent._posts_table.selected = 2 * current_well.id
+
+          ret = track_spot(np.array(self._parent._scene._img),
+                           prev_well.spot_1, 10)
+          if ret is not None:
+            current_well.spot_1 = ret
+            self._parent._scene.post_detected_in_scene.emit(
+                ret.x, ret.y, ret.radius if ret.radius is not None else -1)
+
+          self._parent._posts_table.selected = 2 * current_well.id + 1
+
+          ret = track_spot(np.array(self._parent._scene._img),
+                           prev_well.spot_2, 10)
+          if ret is not None:
+            current_well.spot_2 = ret
+            self._parent._scene.post_detected_in_scene.emit(
+                ret.x, ret.y, ret.radius if ret.radius is not None else -1)
+
+          sleep(0.05)
+
+    self._signal.processing_done.emit()
+
 
 class MainWindow(QMainWindow):
   """"""
@@ -631,6 +719,9 @@ class MainWindow(QMainWindow):
     self._time_idx: int = 0
     self._quadrant: str = 'A'
     self._time_to_index: Dict[str, int] = dict()
+
+    self._thread_pool: QThreadPool = QThreadPool()
+    self._stop_thread: bool = False
 
     self.image_loaded.connect(self._scene.reload_image_in_scene)
     self.image_loaded.connect(self._scene.reset_circles_in_scene)
@@ -899,7 +990,23 @@ class MainWindow(QMainWindow):
   def process_images(self) -> None:
     """"""
 
-    ...
+    worker = TrackingWorker(self)
+    self._process_button.setText('Stop Processing')
+    self._process_button.clicked.disconnect(self.process_images)
+    self._process_button.clicked.connect(self.stop_processing)
+    self._thread_pool.start(worker)
+
+  @pyqtSlot()
+  def stop_processing(self) -> None:
+    """"""
+
+    self._stop_thread = True
+    if not self._thread_pool.waitForDone(3000):
+      raise TimeoutError
+    self._process_button.setText('Process')
+    self._process_button.clicked.connect(self.process_images)
+    self._process_button.clicked.disconnect(self.stop_processing)
+    self._stop_thread = False
 
   @pyqtSlot()
   def enable_process_button(self) -> None:
