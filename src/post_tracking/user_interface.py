@@ -682,7 +682,8 @@ class TrackingWorker(QRunnable):
           self._parent._posts_table.selected = 2 * current_well.id
 
           ret = track_spot(np.array(self._parent._scene._img),
-                           prev_well.spot_1, 10)
+                           prev_well.spot_1, 10, self._parent._min_radius,
+                           self._parent._max_radius)
           if ret is not None:
             current_well.spot_1 = ret
             self._parent._scene.post_detected_in_scene.emit(
@@ -691,7 +692,8 @@ class TrackingWorker(QRunnable):
           self._parent._posts_table.selected = 2 * current_well.id + 1
 
           ret = track_spot(np.array(self._parent._scene._img),
-                           prev_well.spot_2, 10)
+                           prev_well.spot_2, 10, self._parent._min_radius,
+                           self._parent._max_radius)
           if ret is not None:
             current_well.spot_2 = ret
             self._parent._scene.post_detected_in_scene.emit(
@@ -729,6 +731,8 @@ class MainWindow(QMainWindow):
 
     self._thread_pool: QThreadPool = QThreadPool()
     self._stop_thread: bool = False
+    self._min_radius: Optional[int] = None
+    self._max_radius: Optional[int] = None
 
     self.image_loaded.connect(self._scene.reload_image_in_scene)
     self.image_loaded.connect(self._scene.reset_circles_in_scene)
@@ -869,6 +873,11 @@ class MainWindow(QMainWindow):
     if self._timepoints[self._time_idx][self._quadrant][well][spot] is None:
       return
 
+    if self._min_radius is None:
+      self._min_radius = int(r / 2)
+    if self._max_radius is None:
+      self._max_radius = int(r * 1.5)
+
     self._timepoints[self._time_idx][self._quadrant][well][spot].x = x
     self._timepoints[self._time_idx][self._quadrant][well][spot].y = y
     self._timepoints[self._time_idx][self._quadrant][well][spot].radius = r
@@ -883,6 +892,10 @@ class MainWindow(QMainWindow):
     spot = index % 2
 
     self._timepoints[self._time_idx][self._quadrant][well][spot] = None
+
+    if not any(timepoint for timepoint in self._timepoints):
+      self._min_radius = None
+      self._max_radius = None
 
     self.data_updated.emit()
 

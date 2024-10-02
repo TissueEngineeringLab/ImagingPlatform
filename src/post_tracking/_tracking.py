@@ -9,8 +9,13 @@ from typing import Optional, Tuple
 from _structure import Spot
 
 
-def detect_spot(image: np.ndarray, y_1: int,
-                x_1: int, y_2: int, x_2: int) -> Optional[Spot]:
+def detect_spot(image: np.ndarray, 
+                y_1: int,
+                x_1: int, 
+                y_2: int, 
+                x_2: int,
+                min_radius: Optional[int] = None,
+                max_radius: Optional[int] = None) -> Optional[Spot]:
   """"""
 
   x_1, x_2 = sorted((x_1, x_2))
@@ -19,7 +24,7 @@ def detect_spot(image: np.ndarray, y_1: int,
     return
 
   roi = deepcopy(image[x_1: x_2, y_1: y_2, :])
-  ret = _detect_spot(roi)
+  ret = _detect_spot(roi, min_radius=min_radius, max_radius=max_radius)
 
   # Undetected spots are handled elsewhere
   if ret is None:
@@ -30,14 +35,19 @@ def detect_spot(image: np.ndarray, y_1: int,
   return Spot(y_1 + y, x_1 + x, r)
 
 
-def track_spot(image: np.ndarray, spot: Spot, offset: int) -> Optional[Spot]:
+def track_spot(image: np.ndarray, 
+               spot: Spot, 
+               offset: int,
+               min_radius: Optional[int],
+               max_radius: Optional[int]) -> Optional[Spot]:
   """"""
 
   roi = deepcopy(image[spot.y - spot.radius - offset:
                        spot.y + spot.radius + offset,
                        spot.x - spot.radius - offset:
                        spot.x + spot.radius + offset, :])
-  ret = _detect_spot(roi, prev_rad=spot.radius)
+  ret = _detect_spot(roi, prev_rad=spot.radius, 
+                     min_radius=min_radius, max_radius=max_radius)
 
   # Undetected spots are handled elsewhere
   if ret is None:
@@ -50,6 +60,8 @@ def track_spot(image: np.ndarray, spot: Spot, offset: int) -> Optional[Spot]:
 
 
 def _detect_spot(roi: np.ndarray,
+                 min_radius: Optional[int],
+                 max_radius: Optional[int],
                  prev_rad: Optional[int] = None) -> Optional[Tuple[int, int,
                                                                    int]]:
   """"""
@@ -67,6 +79,11 @@ def _detect_spot(roi: np.ndarray,
              else int(prev_rad * 0.75))
   max_rad = (int(np.min(spot.shape[:2]) * 2) if prev_rad is None
              else int(prev_rad * 1.25))
+
+  if min_radius is not None:
+    min_rad = max(min_rad, min_radius)
+  if max_radius is not None:
+    max_rad = min(max_rad, max_radius)
 
   detect = cv2.HoughCircles(spot,
                             cv2.HOUGH_GRADIENT,
