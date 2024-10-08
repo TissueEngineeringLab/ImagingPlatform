@@ -13,6 +13,7 @@ from csv import DictWriter
 from ._structure import TimePoint, path_to_time, Quadrant, path_to_str
 from ._custom_scene import CustomScene
 from ._post_frame import PostsParentFrame
+from ._tracking_worker import TrackingWorker
 
 
 class MainWindow(QMainWindow):
