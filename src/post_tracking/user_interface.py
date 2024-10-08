@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                              QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QFileDialog, QFrame,
                              QGraphicsEllipseItem, QStyle)
-from pyqtgraph import PlotWidget
+from pyqtgraph import PlotWidget, DateAxisItem, mkPen
 import sys
 from typing import Optional
 from pathlib import Path
@@ -742,6 +742,8 @@ class MainWindow(QMainWindow):
     self.image_loaded.connect(self._posts_table.load_text)
 
     self.data_updated.connect(self.enable_process_button)
+    self.data_updated.connect(self.update_graph)
+    self.quadrant_changed.connect(self.update_graph)
 
   def _set_layout(self) -> None:
     """"""
@@ -854,10 +856,16 @@ class MainWindow(QMainWindow):
     # Graph integration
     self._graph = PlotWidget(background=None)
     self._graph.setMinimumHeight(200)
-    self._graph.setXRange(0, 1)
-    self._graph.setYRange(0, 1)
     self._graph.setLabel("left", "Distance (px)")
-    self._graph.setLabel("bottom", "Time")
+    axis = DateAxisItem()
+    self._graph.setAxisItems({'bottom': axis})
+    pen_left = mkPen(color=(255, 0, 0))
+    pen_right = mkPen(color=(0, 0, 255))
+    self._graph.addLegend()
+    self._line_left = self._graph.plot(list(), list(), pen=pen_left,
+                                       name='Left well')
+    self._line_right = self._graph.plot(list(), list(), pen=pen_right,
+                                        name='Right well')
     self._right_panel_layout.addWidget(self._graph)
 
     # Process button
@@ -907,6 +915,23 @@ class MainWindow(QMainWindow):
       self._max_radius = None
 
     self.data_updated.emit()
+
+  @pyqtSlot()
+  def update_graph(self) -> None:
+    """"""
+
+    valid = [quad for point in self._timepoints for quad in point
+             if quad.id == self._quadrant and quad]
+    left = (quad for quad in valid if quad.well_1.is_defined)
+    right = (quad for quad in valid if quad.well_2.is_defined)
+
+    to_plot_left = ((quad.acq_time, quad.well_1.distance) for quad in left)
+    to_plot_right = ((quad.acq_time, quad.well_2.distance) for quad in right)
+
+    self._line_left.setData(*zip(*to_plot_left))
+    self._line_right.setData(*zip(*to_plot_right))
+
+    self._graph.autoRange()
 
   @pyqtSlot(str)
   def select_time(self, value: str) -> None:
