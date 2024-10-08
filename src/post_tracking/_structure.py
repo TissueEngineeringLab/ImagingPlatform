@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, Iterator
+from typing import Optional, Iterator, List, Dict, Union
 from numpy import linalg
 from pathlib import Path
 from re import fullmatch
 from calendar import timegm
+from time import gmtime, strftime
 
 
 def path_to_time(path: Path) -> float:
@@ -163,6 +164,37 @@ class TimePoint:
                Quadrant(path_b, time_b, 'B'),
                Quadrant(path_c, time_c, 'C'),
                Quadrant(path_d, time_d, 'D'))
+
+  def export(self) -> List[Dict[str, Optional[Union[str, float, int]]]]:
+    """"""
+
+    ret = list()
+    for quad in self:
+      for well in quad:
+        item = dict(timestamp_seconds=quad.acq_time,
+                    timestamp_human=strftime('%d/%m/%Y %H:%M:%S',
+                                             gmtime(quad.acq_time)),
+                    quadrant=quad.id,
+                    well=well.id)
+        if well.spot_1 is not None:
+          item['spot_1_x'] = well.spot_1.x
+          item['spot_1_y'] = well.spot_1.y
+          item['spot_1_r'] = well.spot_1.radius
+        else:
+          item['spot_1_x'] = None
+          item['spot_1_y'] = None
+          item['spot_1_r'] = None
+        if well.spot_2 is not None:
+          item['spot_2_x'] = well.spot_2.x
+          item['spot_2_y'] = well.spot_2.y
+          item['spot_2_r'] = well.spot_2.radius
+        else:
+          item['spot_2_x'] = None
+          item['spot_2_y'] = None
+          item['spot_2_r'] = None
+
+        ret.append(item)
+    return ret
 
   def __iter__(self) -> Iterator[Quadrant]:
     """"""

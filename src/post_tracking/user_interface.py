@@ -12,13 +12,13 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                              QGraphicsEllipseItem, QStyle)
 from pyqtgraph import PlotWidget, DateAxisItem, mkPen
 import sys
-from typing import Optional
+from typing import Optional, Union, List, Dict
 from pathlib import Path
 from PIL import Image
 import numpy as np
-from typing import List, Dict
 from itertools import batched, count, pairwise
 from time import sleep
+from csv import DictWriter
 
 from _tracking import detect_spot, track_spot
 from _structure import TimePoint, path_to_time, Quadrant, path_to_str
@@ -821,7 +821,19 @@ class MainWindow(QMainWindow):
     self._spacer_3 = QLabel()
     self._spacer_3.setFixedHeight(29)
     self._spacer_3.setMinimumWidth(10)
+    self._spacer_3.setMaximumWidth(50)
     self._left_title_bar.addWidget(self._spacer_3)
+
+    self._export_button = QPushButton('Export')
+    self._export_button.clicked.connect(self.export_results)
+    self._export_button.setFixedSize(QSize(80, 29))
+    self._export_button.setEnabled(False)
+    self._left_title_bar.addWidget(self._export_button)
+
+    self._spacer_5 = QLabel()
+    self._spacer_5.setFixedHeight(29)
+    self._spacer_5.setMinimumWidth(10)
+    self._left_title_bar.addWidget(self._spacer_5)
 
     # Rest of the left panel
     self._left_panel_layout.addLayout(self._left_title_bar, stretch=1)
@@ -1021,6 +1033,7 @@ class MainWindow(QMainWindow):
     if not folder:
       return
 
+    self._img_folder = Path(folder)
     images = sorted(Path(folder).glob('*.jpg'), key=path_to_time)
 
     self._timepoints.clear()
@@ -1043,6 +1056,35 @@ class MainWindow(QMainWindow):
     self._time_combo.setEnabled(True)
     self._prev_time_button.setEnabled(True)
     self._next_time_button.setEnabled(True)
+    self._export_button.setEnabled(True)
+
+  @pyqtSlot()
+  def export_results(self) -> None:
+    """"""
+
+    ret: List[Dict[str, Optional[Union[str, float, int]]]] = list()
+    for point in self._timepoints:
+      ret.extend(point.export())
+
+    if not ret:
+      return
+
+    base_dir = (self._img_folder if self._img_folder is not None
+                else Path.home())
+    file, _ = QFileDialog.getSaveFileName(caption='File to save data to',
+                                          directory=str(base_dir),
+                                          filter='Text files (*.txt *.csv '
+                                                 '*.dat)')
+    if not file:
+      return
+    file = Path(file)
+    if not file.suffix:
+      file = file.with_suffix('.csv')
+
+    with open(file, 'w') as csvfile:
+      writer = DictWriter(csvfile, fieldnames=ret[0].keys())
+      writer.writeheader()
+      writer.writerows(ret)
 
   @pyqtSlot()
   def process_images(self) -> None:
