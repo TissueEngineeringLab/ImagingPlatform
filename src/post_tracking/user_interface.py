@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                              QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QFileDialog, QFrame,
                              QGraphicsEllipseItem, QStyle)
+from pyqtgraph import PlotWidget
 import sys
 from typing import Optional
 from pathlib import Path
@@ -832,11 +833,6 @@ class MainWindow(QMainWindow):
     self._progress_bar.setRange(0, 1000)
     self._left_panel_layout.addWidget(self._progress_bar)
 
-    # Right panel
-    self._right_label = QLabel('Right panel')
-    self._right_label.setFixedSize(QSize(200, 29))
-    self._right_panel_layout.addWidget(self._right_label)
-
     # Scrollable area containing the information on the detected spots
     self._posts_table = PostsParentFrame()
     self._posts_table.setMinimumHeight(350)
@@ -850,6 +846,19 @@ class MainWindow(QMainWindow):
 
     self._posts_table.spot_params_updated.connect(self.update_data)
     self._posts_table.deleted_post.connect(self.delete_data)
+
+    self._spacer_4 = QLabel('Post distance vs time')
+    self._spacer_4.setFixedHeight(19)
+    self._right_panel_layout.addWidget(self._spacer_4)
+
+    # Graph integration
+    self._graph = PlotWidget(background=None)
+    self._graph.setMinimumHeight(200)
+    self._graph.setXRange(0, 1)
+    self._graph.setYRange(0, 1)
+    self._graph.setLabel("left", "Distance (px)")
+    self._graph.setLabel("bottom", "Time")
+    self._right_panel_layout.addWidget(self._graph)
 
     # Process button
     self._process_button = QPushButton('Process')
