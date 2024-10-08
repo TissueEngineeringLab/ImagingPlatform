@@ -1,5 +1,8 @@
 # coding: utf-8
 
+"""This file contains the CustomScene class used for drawing the selected image
+and the detected spots."""
+
 from PyQt6.QtWidgets import (QGraphicsScene, QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QGraphicsEllipseItem,
                              QGraphicsView)
@@ -123,10 +126,10 @@ class CustomScene(QGraphicsScene):
 
     # Handle left mouse button press
     if Qt.MouseButton.LeftButton & event.button():
-      self._leftMousePressEvent(event)
+      self._left_mouse_press_event(event)
     # Handle middle mouse button press
     elif Qt.MouseButton.MiddleButton & event.button():
-      self._middleMousePressEvent(event)
+      self._middle_mouse_press_event(event)
     # Use default behavior for any other button pressed
     else:
       super().mousePressEvent(event)
@@ -142,10 +145,10 @@ class CustomScene(QGraphicsScene):
 
     # Handle mouse moved while left button pressed
     if Qt.MouseButton.LeftButton & event.buttons():
-      self._leftMouseMoveEvent(event)
+      self._left_mouse_move_event(event)
     # Handle mouse moved while middle button pressed
     elif Qt.MouseButton.MiddleButton & event.buttons():
-      self._middleMouseMoveEvent(event)
+      self._middle_mouse_move_event(event)
     # Use default behavior for any other movement
     else:
       super().mousePressEvent(event)
@@ -161,10 +164,10 @@ class CustomScene(QGraphicsScene):
 
     # Handle left mouse button release
     if Qt.MouseButton.LeftButton & event.button():
-      self._leftMouseReleaseEvent(event)
+      self._left_mouse_release_event(event)
     # Handle middle mouse button release
     elif Qt.MouseButton.MiddleButton & event.button():
-      self._middleMouseReleaseEvent(event)
+      self._middle_mouse_release_event(event)
     # Use default behavior for any other button released
     else:
       super().mousePressEvent(event)
@@ -321,7 +324,7 @@ class CustomScene(QGraphicsScene):
       self._circle_2_right.setCoords(0, 0, 0, 0)
       self._circle_2_right_item.setRect(self._circle_2_right.normalized())
 
-  def _leftMousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+  def _left_mouse_press_event(self, event: QGraphicsSceneMouseEvent) -> None:
     """Called when the left mouse button is pressed over the scene.
 
     Enables and draws the selection rectangle on top of the displayed image.
@@ -345,7 +348,7 @@ class CustomScene(QGraphicsScene):
     # Accept event to make sure it's not handled elsewhere
     event.accept()
 
-  def _leftMouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+  def _left_mouse_move_event(self, event: QGraphicsSceneMouseEvent) -> None:
     """Called when the mouse is being moved over the scene with the left button
     pressed.
 
@@ -371,7 +374,7 @@ class CustomScene(QGraphicsScene):
     # Accept event to make sure it's not handled elsewhere
     event.accept()
 
-  def _leftMouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+  def _left_mouse_release_event(self, event: QGraphicsSceneMouseEvent) -> None:
     """Called when the left mouse button is released, after moving the mouse
     on the scene with the left button pressed.
 
@@ -412,7 +415,7 @@ class CustomScene(QGraphicsScene):
     # Accept event to make sure it's not handled elsewhere
     event.accept()
 
-  def _middleMousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+  def _middle_mouse_press_event(self, event: QGraphicsSceneMouseEvent) -> None:
     """Called when the middle mouse button is pressed over the scene.
 
     Saves the coordinates of the click for later dragging the image.
@@ -429,7 +432,7 @@ class CustomScene(QGraphicsScene):
     # Accept event to make sure it's not handled elsewhere
     event.accept()
 
-  def _middleMouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+  def _middle_mouse_move_event(self, event: QGraphicsSceneMouseEvent) -> None:
     """Called when the mouse is being moved over the scene with the middle
     button pressed.
 
@@ -461,7 +464,8 @@ class CustomScene(QGraphicsScene):
       # Accept event to make sure it's not handled elsewhere
       event.accept()
 
-  def _middleMouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+  def _middle_mouse_release_event(self,
+                                  event: QGraphicsSceneMouseEvent) -> None:
     """Called when the middle mouse button is released, after moving the mouse
     on the scene with the middle button pressed.
 
