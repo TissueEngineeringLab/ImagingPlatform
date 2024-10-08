@@ -4,14 +4,13 @@ from __future__ import annotations
 from PyQt6.QtCore import (QSize, QRectF, Qt, pyqtSignal, pyqtSlot, QRunnable,
                           QThreadPool, QObject)
 from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush, QEnterEvent, QMouseEvent
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
-                             QHBoxLayout, QWidget, QComboBox, QPushButton,
-                             QGraphicsView, QProgressBar, QGraphicsScene,
+from PyQt6.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QHBoxLayout,
+                             QWidget, QComboBox, QPushButton, QGraphicsView,
+                             QProgressBar, QGraphicsScene,
                              QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QFileDialog, QFrame,
                              QGraphicsEllipseItem, QStyle)
 from pyqtgraph import PlotWidget, DateAxisItem, mkPen
-import sys
 from typing import Optional, Union, List, Dict
 from pathlib import Path
 from PIL import Image
@@ -20,8 +19,8 @@ from itertools import batched, count, pairwise
 from time import sleep
 from csv import DictWriter
 
-from _tracking import detect_spot, track_spot
-from _structure import TimePoint, path_to_time, Quadrant, path_to_str
+from ._tracking import detect_spot, track_spot
+from ._structure import TimePoint, path_to_time, Quadrant, path_to_str
 
 
 class CustomScene(QGraphicsScene):
@@ -1116,13 +1115,3 @@ class MainWindow(QMainWindow):
       self._process_button.setEnabled(True)
     else:
       self._process_button.setEnabled(False)
-
-
-if __name__ == "__main__":
-
-  app = QApplication(sys.argv)
-
-  window = MainWindow()
-  window.show()
-
-  sys.exit(app.exec())

@@ -6,7 +6,7 @@ import cv2
 from functools import partial
 from typing import Optional, Tuple
 
-from _structure import Spot
+from ._structure import Spot
 
 
 def detect_spot(image: np.ndarray, 
