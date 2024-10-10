@@ -36,7 +36,7 @@ class CustomScene(QGraphicsScene):
     self._view = view
 
     # These attributes are dynamically set
-    self._img: Optional[Image] = None
+    self.img: Optional[Image] = None
     self._quadrant: Optional[Quadrant] = None
     self._selected_index: int = 0
     self._view_click_init: Optional[QPoint] = None
@@ -95,7 +95,7 @@ class CustomScene(QGraphicsScene):
       event: The event generated whenever the wheel is being scrolled.
     """
 
-    if self._img is not None:
+    if self.img is not None:
 
       # Case when the wheel is being scrolled upwards
       if event.delta() > 0 and self._zoom_index < 10:
@@ -185,7 +185,7 @@ class CustomScene(QGraphicsScene):
 
     # Set the current quadrant and image
     self._quadrant = quadrant
-    self._img = Image.open(self._quadrant.path)
+    self.img = Image.open(self._quadrant.path)
 
     # Delete all the previously drawn objects
     for item in self.items():
@@ -333,7 +333,7 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button press.
     """
 
-    if self._img is not None:
+    if self.img is not None:
 
       # Get the mouse and overall image coordinates
       x, y = event.scenePos().x(), event.scenePos().y()
@@ -359,7 +359,7 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button movement.
     """
 
-    if self._img is not None:
+    if self.img is not None:
 
       # Get the mouse and overall image coordinates
       x, y = event.scenePos().x(), event.scenePos().y()
@@ -385,10 +385,10 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button release.
     """
 
-    if self._img is not None:
+    if self.img is not None:
 
       # Performing spot detection in the selected subframe
-      detected = detect_spot(np.array(self._img),
+      detected = detect_spot(np.array(self.img),
                              *map(int, self._select_rect.getCoords()))
 
       # Affect the detected spot to the correct well and position
@@ -424,7 +424,7 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button press.
     """
 
-    if self._img is not None:
+    if self.img is not None:
 
       self._center_view = self._view.viewport().rect().center()
       self._view_click_init = event.screenPos()
@@ -442,7 +442,7 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button movement.
     """
 
-    if self._img is not None and self._last_drag_event is None:
+    if self.img is not None and self._last_drag_event is None:
 
       # Workaround to avoid infinite recursion, as re-centering the image will
       # cause mouse movement
@@ -475,7 +475,7 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button release.
     """
 
-    if self._img is not None:
+    if self.img is not None:
 
       self._center_view = None
       self._view_click_init = None

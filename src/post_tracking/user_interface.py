@@ -36,21 +36,21 @@ class MainWindow(QMainWindow):
     self.setCentralWidget(self._main_widget)
 
     self._img_folder: Optional[Path] = None
-    self._timepoints: List[TimePoint] = list()
+    self.timepoints: List[TimePoint] = list()
     self._time_idx: int = 0
-    self._quadrant: str = 'A'
+    self.quadrant: str = 'A'
     self._time_to_index: Dict[str, int] = dict()
 
     self._thread_pool: QThreadPool = QThreadPool()
-    self._stop_thread: bool = False
-    self._min_radius: Optional[int] = None
-    self._max_radius: Optional[int] = None
+    self.stop_thread: bool = False
+    self.min_radius: Optional[int] = None
+    self.max_radius: Optional[int] = None
 
-    self.image_loaded.connect(self._scene.reload_image_in_scene)
-    self.image_loaded.connect(self._scene.reset_circles_in_scene)
-    self.image_loaded.connect(self._posts_table.reset_text)
-    self.image_loaded.connect(self._scene.draw_circles_in_scene)
-    self.image_loaded.connect(self._posts_table.load_text)
+    self.image_loaded.connect(self.scene.reload_image_in_scene)
+    self.image_loaded.connect(self.scene.reset_circles_in_scene)
+    self.image_loaded.connect(self.posts_table.reset_text)
+    self.image_loaded.connect(self.scene.draw_circles_in_scene)
+    self.image_loaded.connect(self.posts_table.load_text)
 
     self.data_updated.connect(self.enable_process_button)
     self.data_updated.connect(self.update_graph)
@@ -80,12 +80,12 @@ class MainWindow(QMainWindow):
     self._time_label.setFixedSize(QSize(85, 29))
     self._left_title_bar.addWidget(self._time_label)
 
-    self._time_combo = QComboBox()
-    self._time_combo.setFixedSize(QSize(180, 29))
-    self._time_combo.setEnabled(False)
-    self._time_combo.currentTextChanged.connect(self.select_time)
-    self.time_changed.connect(self._time_combo.setCurrentIndex)
-    self._left_title_bar.addWidget(self._time_combo)
+    self.time_combo = QComboBox()
+    self.time_combo.setFixedSize(QSize(180, 29))
+    self.time_combo.setEnabled(False)
+    self.time_combo.currentTextChanged.connect(self.select_time)
+    self.time_changed.connect(self.time_combo.setCurrentIndex)
+    self._left_title_bar.addWidget(self.time_combo)
 
     self._prev_time_button = QPushButton('<')
     self._prev_time_button.clicked.connect(self.prev_time)
@@ -150,27 +150,27 @@ class MainWindow(QMainWindow):
     self._left_panel_layout.addLayout(self._left_title_bar, stretch=1)
 
     self._view = QGraphicsView()
-    self._scene = CustomScene(self._view)
-    self._view.setScene(self._scene)
+    self.scene = CustomScene(self._view)
+    self._view.setScene(self.scene)
     self._left_panel_layout.addWidget(self._view)
 
-    self._progress_bar = QProgressBar()
-    self._progress_bar.setRange(0, 1000)
-    self._left_panel_layout.addWidget(self._progress_bar)
+    self.progress_bar = QProgressBar()
+    self.progress_bar.setRange(0, 1000)
+    self._left_panel_layout.addWidget(self.progress_bar)
 
     # Scrollable area containing the information on the detected spots
-    self._posts_table = PostsParentFrame()
-    self._posts_table.setMinimumHeight(350)
-    self._right_panel_layout.addWidget(self._posts_table)
-    self._posts_table.post_selected_in_table.connect(
-      self._scene.highlight_selected_circle_in_scene)
+    self.posts_table = PostsParentFrame()
+    self.posts_table.setMinimumHeight(350)
+    self._right_panel_layout.addWidget(self.posts_table)
+    self.posts_table.post_selected_in_table.connect(
+      self.scene.highlight_selected_circle_in_scene)
 
-    self._scene.post_detected_in_scene.connect(
-      self._posts_table.update_post_text)
-    self._posts_table.deleted_post.connect(self._scene.delete_circle_in_scene)
+    self.scene.post_detected_in_scene.connect(
+      self.posts_table.update_post_text)
+    self.posts_table.deleted_post.connect(self.scene.delete_circle_in_scene)
 
-    self._posts_table.spot_params_updated.connect(self.update_data)
-    self._posts_table.deleted_post.connect(self.delete_data)
+    self.posts_table.spot_params_updated.connect(self.update_data)
+    self.posts_table.deleted_post.connect(self.delete_data)
 
     self._spacer_4 = QLabel('Post distance vs time')
     self._spacer_4.setFixedHeight(19)
@@ -210,17 +210,17 @@ class MainWindow(QMainWindow):
     well = index // 2
     spot = index % 2
 
-    if self._timepoints[self._time_idx][self._quadrant][well][spot] is None:
+    if self.timepoints[self._time_idx][self.quadrant][well][spot] is None:
       return
 
-    if self._min_radius is None:
-      self._min_radius = int(r / 2)
-    if self._max_radius is None:
-      self._max_radius = int(r * 1.5)
+    if self.min_radius is None:
+      self.min_radius = int(r / 2)
+    if self.max_radius is None:
+      self.max_radius = int(r * 1.5)
 
-    self._timepoints[self._time_idx][self._quadrant][well][spot].x = x
-    self._timepoints[self._time_idx][self._quadrant][well][spot].y = y
-    self._timepoints[self._time_idx][self._quadrant][well][spot].radius = r
+    self.timepoints[self._time_idx][self.quadrant][well][spot].x = x
+    self.timepoints[self._time_idx][self.quadrant][well][spot].y = y
+    self.timepoints[self._time_idx][self.quadrant][well][spot].radius = r
 
     self.data_updated.emit()
 
@@ -231,11 +231,11 @@ class MainWindow(QMainWindow):
     well = index // 2
     spot = index % 2
 
-    self._timepoints[self._time_idx][self._quadrant][well][spot] = None
+    self.timepoints[self._time_idx][self.quadrant][well][spot] = None
 
-    if not any(timepoint for timepoint in self._timepoints):
-      self._min_radius = None
-      self._max_radius = None
+    if not any(timepoint for timepoint in self.timepoints):
+      self.min_radius = None
+      self.max_radius = None
 
     self.data_updated.emit()
 
@@ -243,8 +243,8 @@ class MainWindow(QMainWindow):
   def update_graph(self) -> None:
     """"""
 
-    valid = [quad for point in self._timepoints for quad in point
-             if quad.id == self._quadrant and quad]
+    valid = [quad for point in self.timepoints for quad in point
+             if quad.id == self.quadrant and quad]
     left = (quad for quad in valid if quad.well_1.is_defined)
     right = (quad for quad in valid if quad.well_2.is_defined)
 
@@ -261,7 +261,7 @@ class MainWindow(QMainWindow):
     """"""
 
     self._time_idx = self._time_to_index[value]
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
 
   @pyqtSlot()
   def prev_time(self) -> None:
@@ -271,26 +271,26 @@ class MainWindow(QMainWindow):
       return
 
     self._time_idx -= 1
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
     self.time_changed.emit(self._time_idx)
 
   @pyqtSlot()
   def next_time(self) -> None:
     """"""
 
-    if self._time_idx >= len(self._timepoints) - 1:
+    if self._time_idx >= len(self.timepoints) - 1:
       return
 
     self._time_idx += 1
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
     self.time_changed.emit(self._time_idx)
 
   @pyqtSlot(str)
   def select_quadrant(self, value: str) -> None:
     """"""
 
-    self._quadrant = value
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.quadrant = value
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
 
   @pyqtSlot()
   def prev_quadrant(self):
@@ -298,20 +298,20 @@ class MainWindow(QMainWindow):
 
     val = -1
 
-    if self._quadrant == 'A':
-      self._quadrant = 'D'
+    if self.quadrant == 'A':
+      self.quadrant = 'D'
       val = 3
-    elif self._quadrant == 'B':
-      self._quadrant = 'A'
+    elif self.quadrant == 'B':
+      self.quadrant = 'A'
       val = 0
-    elif self._quadrant == 'C':
-      self._quadrant = 'B'
+    elif self.quadrant == 'C':
+      self.quadrant = 'B'
       val = 1
-    elif self._quadrant == 'D':
-      self._quadrant = 'C'
+    elif self.quadrant == 'D':
+      self.quadrant = 'C'
       val = 2
 
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
     self.quadrant_changed.emit(val)
 
   @pyqtSlot()
@@ -320,20 +320,20 @@ class MainWindow(QMainWindow):
 
     val = -1
 
-    if self._quadrant == 'A':
-      self._quadrant = 'B'
+    if self.quadrant == 'A':
+      self.quadrant = 'B'
       val = 1
-    elif self._quadrant == 'B':
-      self._quadrant = 'C'
+    elif self.quadrant == 'B':
+      self.quadrant = 'C'
       val = 2
-    elif self._quadrant == 'C':
-      self._quadrant = 'D'
+    elif self.quadrant == 'C':
+      self.quadrant = 'D'
       val = 3
-    elif self._quadrant == 'D':
-      self._quadrant = 'A'
+    elif self.quadrant == 'D':
+      self.quadrant = 'A'
       val = 0
 
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
     self.quadrant_changed.emit(val)
 
   @pyqtSlot()
@@ -347,24 +347,24 @@ class MainWindow(QMainWindow):
     self._img_folder = Path(folder)
     images = sorted(Path(folder).glob('*.jpg'), key=path_to_time)
 
-    self._timepoints.clear()
+    self.timepoints.clear()
     self._time_idx = 0
-    self._quadrant = 'A'
+    self.quadrant = 'A'
     for path_1, path_2, path_3, path_4 in batched(images, 4):
-      self._timepoints.append(TimePoint.parse_paths(path_1, path_2,
-                                                    path_3, path_4))
+      self.timepoints.append(TimePoint.parse_paths(path_1, path_2,
+                                                   path_3, path_4))
 
-    self.image_loaded.emit(self._timepoints[self._time_idx][self._quadrant])
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
 
     self._time_to_index = dict(zip((path_to_str(time_point.A.path) for
-                                    time_point in self._timepoints),
+                                    time_point in self.timepoints),
                                    count()))
-    self._time_combo.insertItems(0, self._time_to_index.keys())
+    self.time_combo.insertItems(0, self._time_to_index.keys())
 
     self._quadrant_combo.setEnabled(True)
     self._prev_quad_button.setEnabled(True)
     self._next_quad_button.setEnabled(True)
-    self._time_combo.setEnabled(True)
+    self.time_combo.setEnabled(True)
     self._prev_time_button.setEnabled(True)
     self._next_time_button.setEnabled(True)
     self._export_button.setEnabled(True)
@@ -374,7 +374,7 @@ class MainWindow(QMainWindow):
     """"""
 
     ret: List[Dict[str, Optional[Union[str, float, int]]]] = list()
-    for point in self._timepoints:
+    for point in self.timepoints:
       ret.extend(point.export())
 
     if not ret:
@@ -411,19 +411,19 @@ class MainWindow(QMainWindow):
   def stop_processing(self) -> None:
     """"""
 
-    self._stop_thread = True
+    self.stop_thread = True
     if not self._thread_pool.waitForDone(3000):
       raise TimeoutError
     self._process_button.setText('Process')
     self._process_button.clicked.connect(self.process_images)
     self._process_button.clicked.disconnect(self.stop_processing)
-    self._stop_thread = False
+    self.stop_thread = False
 
   @pyqtSlot()
   def enable_process_button(self) -> None:
     """"""
 
-    if self._timepoints and any(self._timepoints):
+    if self.timepoints and any(self.timepoints):
       self._process_button.setEnabled(True)
     else:
       self._process_button.setEnabled(False)

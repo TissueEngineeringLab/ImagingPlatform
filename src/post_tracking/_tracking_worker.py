@@ -27,19 +27,19 @@ class TrackingWorker(QRunnable):
     self._parent = main_window
     self._signals = WorkerSignal()
     self._signals.processing_done.connect(self._parent.stop_processing)
-    self._signals.track_progress.connect(self._parent._progress_bar.setValue)
+    self._signals.track_progress.connect(self._parent.progress_bar.setValue)
 
   @pyqtSlot()
   def run(self) -> None:
     """"""
 
-    nb_iter = len(self._parent._timepoints) - 1
+    nb_iter = len(self._parent.timepoints) - 1
 
-    for i, (prev, current) in enumerate(pairwise(self._parent._timepoints)):
+    for i, (prev, current) in enumerate(pairwise(self._parent.timepoints)):
 
       self._signals.track_progress.emit(int((i + 1) / nb_iter * 1000))
 
-      if self._parent._stop_thread:
+      if self._parent.stop_thread:
         return
 
       # Only start from the first fully defined timepoint
@@ -53,7 +53,7 @@ class TrackingWorker(QRunnable):
           continue
 
         # Only process one quadrant at a time
-        if current_quad.id != self._parent._quadrant:
+        if current_quad.id != self._parent.quadrant:
           continue
 
         for prev_well, current_well in zip(prev_quad, current_quad):
@@ -67,29 +67,28 @@ class TrackingWorker(QRunnable):
             continue
 
           # Load the image before processing it
-          self._parent._time_combo.setCurrentIndex(i + 1)
+          self._parent.time_combo.setCurrentIndex(i + 1)
 
-          self._parent._posts_table.selected = 2 * current_well.id
+          self._parent.posts_table.selected = 2 * current_well.id
 
-          ret = track_spot(np.array(self._parent._scene._img),
-                           prev_well.spot_1, 10, self._parent._min_radius,
-                           self._parent._max_radius)
+          ret = track_spot(np.array(self._parent.scene.img),
+                           prev_well.spot_1, 10, self._parent.min_radius,
+                           self._parent.max_radius)
           if ret is not None:
             current_well.spot_1 = ret
-            self._parent._scene.post_detected_in_scene.emit(
+            self._parent.scene.post_detected_in_scene.emit(
                 ret.x, ret.y, ret.radius if ret.radius is not None else -1)
 
-          self._parent._posts_table.selected = 2 * current_well.id + 1
+          self._parent.posts_table.selected = 2 * current_well.id + 1
 
-          ret = track_spot(np.array(self._parent._scene._img),
-                           prev_well.spot_2, 10, self._parent._min_radius,
-                           self._parent._max_radius)
+          ret = track_spot(np.array(self._parent.scene.img),
+                           prev_well.spot_2, 10, self._parent.min_radius,
+                           self._parent.max_radius)
           if ret is not None:
             current_well.spot_2 = ret
-            self._parent._scene.post_detected_in_scene.emit(
+            self._parent.scene.post_detected_in_scene.emit(
                 ret.x, ret.y, ret.radius if ret.radius is not None else -1)
 
           sleep(0.05)
 
     self._signals.processing_done.emit()
-
