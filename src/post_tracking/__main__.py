@@ -1,5 +1,10 @@
 # coding: utf-8
 
+"""File executed when calling the code as a module.
+
+Simply launches the user interface, and waits for the user to exit.
+"""
+
 from PyQt6.QtWidgets import QApplication
 import sys
 
