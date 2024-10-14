@@ -114,7 +114,7 @@ class TrackingWorker(QRunnable):
                 ret.x, ret.y, ret.radius if ret.radius is not None else -1)
 
           # Allow some time for the display to refresh
-          sleep(0.05)
+          sleep(0.02)
 
     # Indicate the main window when done processing
     self._signals.processing_done.emit()
