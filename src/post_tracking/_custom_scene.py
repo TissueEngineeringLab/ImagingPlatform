@@ -11,9 +11,11 @@ from PyQt6.QtCore import QRectF, Qt, pyqtSignal, pyqtSlot, QPoint
 from typing import List, Optional
 from PIL import Image
 import numpy as np
+from itertools import chain
+from statistics import mean
 
 from ._tracking import detect_spot
-from ._structure import Quadrant
+from ._structure import Quadrant, Spot
 
 
 class CustomScene(QGraphicsScene):
@@ -168,6 +170,9 @@ class CustomScene(QGraphicsScene):
     # Handle middle mouse button release
     elif Qt.MouseButton.MiddleButton & event.button():
       self._middle_mouse_release_event(event)
+    # Handle right mouse button release
+    elif Qt.MouseButton.RightButton & event.button():
+      self._right_mouse_release_event(event)
     # Use default behavior for any other button released
     else:
       super().mousePressEvent(event)
@@ -480,6 +485,53 @@ class CustomScene(QGraphicsScene):
       self._center_view = None
       self._view_click_init = None
       self._last_drag_event = None
+
+    # Accept event to make sure it's not handled elsewhere
+    event.accept()
+
+  def _right_mouse_release_event(self,
+                                 event: QGraphicsSceneMouseEvent) -> None:
+    """Called when the right mouse button is released.
+
+    Forcibly creates a new spot at the location of the mouse, with a radius
+    equal to the average of the other spots in the scene. If all the spots
+    already exist, or if there is no other detected spot, do nothing.
+
+    Args:
+      event: The event emitted by the mouse button release.
+    """
+
+    # If there is no other detected spot, abort
+    if (all(spot is None for spot in chain(self._quadrant.well_1,
+                                           self._quadrant.well_2))):
+      event.accept()
+      return
+
+    # If all the spots are already defined, abort
+    if self._quadrant.well_1.is_defined and self._quadrant.well_2.is_defined:
+      event.accept()
+      return
+
+    # The radius is the average of the ones of the already detected spots
+    radius = mean(spot.radius for spot in chain(self._quadrant.well_1,
+                                                self._quadrant.well_2)
+                  if spot is not None and spot.radius is not None)
+
+    detected = Spot(int(event.scenePos().x()), int(event.scenePos().y()),
+                    radius)
+
+    # Affect the added spot to the correct well and position
+    if self._selected_index == 0:
+      self._quadrant.well_1.spot_1 = detected
+    elif self._selected_index == 1:
+      self._quadrant.well_1.spot_2 = detected
+    elif self._selected_index == 2:
+      self._quadrant.well_2.spot_1 = detected
+    elif self._selected_index == 3:
+      self._quadrant.well_2.spot_2 = detected
+
+    # Emit signal to indicate that a spot was detected
+    self.post_detected_in_scene.emit(detected.x, detected.y, radius)
 
     # Accept event to make sure it's not handled elsewhere
     event.accept()
