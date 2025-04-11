@@ -25,7 +25,7 @@ def path_to_time(path: Path) -> float:
   """
 
   return timegm(tuple(map(int, fullmatch(r'(\d+)_(\d+)_(\d+)_(\d+)_'
-                                         r'(\d+)_(\d+)_[ABCD]\.jpg',
+                                         r'(\d+)_(\d+)_[0123]\.(?:jpg|png)',
                                          path.name).groups())))
 
 
@@ -41,7 +41,8 @@ def path_to_str(path: Path) -> str:
   """
 
   return '{}/{}/{} {}:{}:{}'.format(*fullmatch(r'(\d+)_(\d+)_(\d+)_(\d+)_'
-                                               r'(\d+)_(\d+)_[ABCD]\.jpg',
+                                               r'(\d+)_(\d+)_[0123]\.'
+                                               r'(?:jpg|png)',
                                                path.name).groups())
 
 
@@ -132,8 +133,8 @@ class Quadrant:
   """Path to the image in which the quadrant is captured."""
   acq_time: float
   """The moment when the image was acquired, as a Unix timestamp."""
-  id: str
-  """Identifier string of the camera, either A, B, C, or D."""
+  id: int
+  """Identifier string of the camera, either 0, 1, 2, or 3."""
 
   well_1: Well = field(default_factory=lambda: Well(0))
   """Well object representing the left well in the quadrant."""
@@ -168,13 +169,13 @@ class TimePoint:
   quadrants."""
 
   A: Quadrant
-  """Quadrant object whose image was acquired by camera A."""
+  """Quadrant object whose image was acquired by camera 0."""
   B: Quadrant
-  """Quadrant object whose image was acquired by camera B."""
+  """Quadrant object whose image was acquired by camera 1."""
   C: Quadrant
-  """Quadrant object whose image was acquired by camera C."""
+  """Quadrant object whose image was acquired by camera 2."""
   D: Quadrant
-  """Quadrant object whose image was acquired by camera D."""
+  """Quadrant object whose image was acquired by camera 3."""
 
   @classmethod
   def parse_paths(cls,
@@ -189,16 +190,16 @@ class TimePoint:
     # Associate each image to a quadrant
     path_a, path_b, path_c, path_d = None, None, None, None
     for path in (path_1, path_2, path_3, path_4):
-      if 'A' in path.name:
+      if path.name.endswith('0.png') or path.name.endswith('0.jpg'):
         path_a = path
         continue
-      elif 'B' in path.name:
+      elif path.name.endswith('1.png') or path.name.endswith('1.jpg'):
         path_b = path
         continue
-      elif 'C' in path.name:
+      elif path.name.endswith('2.png') or path.name.endswith('2.jpg'):
         path_c = path
         continue
-      elif 'D' in path.name:
+      elif path.name.endswith('3.png') or path.name.endswith('3.jpg'):
         path_d = path
         continue
 
@@ -216,10 +217,10 @@ class TimePoint:
       raise
 
     # Return the TimePoint instance containing the detected quadrants
-    return cls(Quadrant(path_a, time_a, 'A'),
-               Quadrant(path_b, time_b, 'B'),
-               Quadrant(path_c, time_c, 'C'),
-               Quadrant(path_d, time_d, 'D'))
+    return cls(Quadrant(path_a, time_a, 0),
+               Quadrant(path_b, time_b, 1),
+               Quadrant(path_c, time_c, 2),
+               Quadrant(path_d, time_d, 3))
 
   def export(self) -> List[Dict[str, Optional[Union[str, float, int]]]]:
     """Method called for formatting the acquired data before saving it in a
@@ -269,20 +270,20 @@ class TimePoint:
     return ret
 
   def __iter__(self) -> Iterator[Quadrant]:
-    """Iterates over the quadrants, in the order A, B, C, D."""
+    """Iterates over the quadrants, in the order 0, 1, 2, 3."""
 
     return iter((self.A, self.B, self.C, self.D))
 
-  def __getitem__(self, item: str) -> Quadrant:
+  def __getitem__(self, item: int) -> Quadrant:
     """Allows to get the quadrant objects by index, for convenience."""
 
-    if item == 'A':
+    if item == 0:
       return self.A
-    elif item == 'B':
+    elif item == 1:
       return self.B
-    elif item == 'C':
+    elif item == 2:
       return self.C
-    elif item == 'D':
+    elif item == 3:
       return self.D
 
     else:

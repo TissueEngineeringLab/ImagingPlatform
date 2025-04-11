@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QHBoxLayout,
 from pyqtgraph import PlotWidget, DateAxisItem, mkPen
 from typing import Optional, Union, List, Dict
 from pathlib import Path
-from itertools import batched, count
+from itertools import batched, count, chain
 from csv import DictWriter
 
 from ._structure import TimePoint, path_to_time, Quadrant, path_to_str
@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
     self._img_folder: Optional[Path] = None
     self.timepoints: List[TimePoint] = list()
     self._time_idx: int = 0
-    self.quadrant: str = 'A'
+    self.quadrant: int = 0
     self._time_to_index: Dict[str, int] = dict()
 
     # Attributes related to the image processing
@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
 
     # Add a combo box for selecting the quadrant
     self._quadrant_combo = QComboBox()
-    self._quadrant_combo.insertItems(0, ('A', 'B', 'C', 'D'))
+    self._quadrant_combo.insertItems(0, ('0', '1', '2', '3'))
     self._quadrant_combo.setFixedSize(QSize(80, 29))
     self._quadrant_combo.setEnabled(False)
     self._quadrant_combo.currentTextChanged.connect(self.select_quadrant)
@@ -219,6 +219,7 @@ class MainWindow(QMainWindow):
     self._graph.setAxisItems({'bottom': axis})
     pen_left = mkPen(color=(255, 0, 0))
     pen_right = mkPen(color=(0, 0, 255))
+    pen_current = mkPen(color=(150, 150, 150))
     self._graph.addLegend()
     self._line_left = self._graph.plot(list(), list(), pen=pen_left,
                                        name='Left well')
@@ -377,7 +378,7 @@ class MainWindow(QMainWindow):
     Loads the associated image and data.
     """
 
-    self.quadrant = value
+    self.quadrant = int(value)
     self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
 
   @pyqtSlot()
@@ -390,17 +391,17 @@ class MainWindow(QMainWindow):
     val = -1
 
     # Unlike the timestamps, the quadrant selection is circular
-    if self.quadrant == 'A':
-      self.quadrant = 'D'
+    if self.quadrant == 0:
+      self.quadrant = 3
       val = 3
-    elif self.quadrant == 'B':
-      self.quadrant = 'A'
+    elif self.quadrant == 1:
+      self.quadrant = 0
       val = 0
-    elif self.quadrant == 'C':
-      self.quadrant = 'B'
+    elif self.quadrant == 2:
+      self.quadrant = 1
       val = 1
-    elif self.quadrant == 'D':
-      self.quadrant = 'C'
+    elif self.quadrant == 3:
+      self.quadrant = 2
       val = 2
 
     self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
@@ -416,17 +417,17 @@ class MainWindow(QMainWindow):
     val = -1
 
     # Unlike the timestamps, the quadrant selection is circular
-    if self.quadrant == 'A':
-      self.quadrant = 'B'
+    if self.quadrant == 0:
+      self.quadrant = 1
       val = 1
-    elif self.quadrant == 'B':
-      self.quadrant = 'C'
+    elif self.quadrant == 1:
+      self.quadrant = 2
       val = 2
-    elif self.quadrant == 'C':
-      self.quadrant = 'D'
+    elif self.quadrant == 2:
+      self.quadrant = 3
       val = 3
-    elif self.quadrant == 'D':
-      self.quadrant = 'A'
+    elif self.quadrant == 3:
+      self.quadrant = 0
       val = 0
 
     self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
@@ -447,12 +448,13 @@ class MainWindow(QMainWindow):
 
     # Sort the images in the source directory based on their timestamp
     self._img_folder = Path(folder)
-    images = sorted(Path(folder).glob('*.jpg'), key=path_to_time)
+    images = sorted(chain(Path(folder).glob('*.jpg'),
+                          Path(folder).glob('*.png')), key=path_to_time)
 
     # resets all the information in the interface
     self.timepoints.clear()
     self._time_idx = 0
-    self.quadrant = 'A'
+    self.quadrant = 0
 
     # Parses all the images and saves their information
     for path_1, path_2, path_3, path_4 in batched(images, 4):
