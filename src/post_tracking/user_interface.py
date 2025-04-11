@@ -72,6 +72,7 @@ class MainWindow(QMainWindow):
     self.data_updated.connect(self.enable_process_button)
     self.data_updated.connect(self.update_graph)
     self.quadrant_changed.connect(self.update_graph)
+    self.time_changed.connect(self.update_graph)
 
   def _set_layout(self) -> None:
     """Sets the overall layout of the interface."""
@@ -223,6 +224,8 @@ class MainWindow(QMainWindow):
                                        name='Left well')
     self._line_right = self._graph.plot(list(), list(), pen=pen_right,
                                         name='Right well')
+    self._line_current = self._graph.plot(list(), list(), pen=pen_current,
+                                          name='Current')
     self._right_panel_layout.addWidget(self._graph)
 
     # Add button for starting a processing
@@ -312,6 +315,17 @@ class MainWindow(QMainWindow):
     # Actually draws the data points on the graph
     self._line_left.setData(*zip(*to_plot_left))
     self._line_right.setData(*zip(*to_plot_right))
+
+    left_min, left_max = self._line_left.dataBounds(1)
+    right_min, right_max = self._line_right.dataBounds(1)
+    min_y = (0 if left_min is None and right_min is None
+             else min(val for val in (left_min, right_min) if val is not None))
+    max_y = (1 if left_max is None and right_max is None
+             else max(val for val in (left_max, right_max) if val is not None))
+    self._line_current.setData(
+      (self.timepoints[self._time_idx][self.quadrant].acq_time,
+       self.timepoints[self._time_idx][self.quadrant].acq_time),
+      (min_y, max_y))
 
     # Updates the range of the graph to best fit the newly drawn data
     self._graph.autoRange()
