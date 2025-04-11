@@ -12,6 +12,7 @@ from typing import Optional, Union, List, Dict
 from pathlib import Path
 from itertools import batched, count, chain
 from csv import DictWriter
+import pickle
 
 from ._structure import TimePoint, path_to_time, Quadrant, path_to_str
 from ._custom_scene import CustomScene
@@ -88,6 +89,19 @@ class MainWindow(QMainWindow):
     self._load_images_button.clicked.connect(self.load_images)
     self._load_images_button.setFixedSize(QSize(130, 29))
     self._left_title_bar.addWidget(self._load_images_button)
+
+    # Add a spacer for a nicer layout
+    self._spacer_0 = QLabel()
+    self._spacer_0.setMaximumWidth(50)
+    self._spacer_0.setMinimumWidth(10)
+    self._spacer_0.setFixedHeight(29)
+    self._left_title_bar.addWidget(self._spacer_0)
+
+    # Add button for loading an entire project
+    self._load_project_button = QPushButton('Load Project')
+    self._load_project_button.clicked.connect(self.load_project)
+    self._load_project_button.setFixedSize(QSize(130, 29))
+    self._left_title_bar.addWidget(self._load_project_button)
 
     # Add a spacer for a nicer layout
     self._spacer_1 = QLabel()
@@ -451,7 +465,7 @@ class MainWindow(QMainWindow):
     images = sorted(chain(Path(folder).glob('*.jpg'),
                           Path(folder).glob('*.png')), key=path_to_time)
 
-    # resets all the information in the interface
+    # Reset all the information in the interface
     self.timepoints.clear()
     self._time_idx = 0
     self.quadrant = 0
@@ -480,11 +494,61 @@ class MainWindow(QMainWindow):
     self._export_button.setEnabled(True)
 
   @pyqtSlot()
+  def load_project(self) -> None:
+    """Called when the Load Project button is clicked.
+
+    Gets the user to choose a pickle file containing information about a
+    project, then loads all the contained information in the interface.
+    """
+
+    # Ask the user to select a pickle file
+    base_dir = (self._img_folder if self._img_folder is not None
+                else Path.home())
+    pickle_file, _ = QFileDialog.getOpenFileName(
+      self,
+      caption="Select Pickle File",
+      directory=str(base_dir),
+      filter='Pickle file (*.pickle)')
+
+    # If no location is given, abort
+    if not pickle_file:
+      return
+
+    with open(Path(pickle_file), 'rb') as data_file:
+      self._img_folder, self.timepoints = pickle.load(data_file)
+
+    # Reset all the information in the interface
+    self._time_idx = 0
+    self.quadrant = 0
+
+    # Emit signal for loading the first image
+    self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
+
+    # Update the entries in the timestamp combo box
+    self._time_to_index = dict(zip((path_to_str(time_point.A.path) for
+                                    time_point in self.timepoints),
+                                   count()))
+    self.time_combo.insertItems(0, self._time_to_index.keys())
+
+    # Enable the options that are by default disabled
+    self._quadrant_combo.setEnabled(True)
+    self._prev_quad_button.setEnabled(True)
+    self._next_quad_button.setEnabled(True)
+    self.time_combo.setEnabled(True)
+    self._prev_time_button.setEnabled(True)
+    self._next_time_button.setEnabled(True)
+    self._export_button.setEnabled(True)
+
+  @pyqtSlot()
   def export_results(self) -> None:
     """Called when the Export button is clicked.
 
     Gathers all the collected data into a simple list of dictionaries, and
-    saves it to a csv file at the indicated location.
+    saves it to a csv file, in a human-readable format, at the indicated
+    location.
+
+    Then, also exports the raw data to a pickle file, so that it can be
+    re-loaded as-is later.
     """
 
     # Gather data from all the spots, detected or not
@@ -496,10 +560,10 @@ class MainWindow(QMainWindow):
     if not ret:
       return
 
-    # Ask the user for a location where to save the data
+    # Ask the user for a location where to export the data in a csv file
     base_dir = (self._img_folder if self._img_folder is not None
                 else Path.home())
-    file, _ = QFileDialog.getSaveFileName(caption='File to save data to',
+    file, _ = QFileDialog.getSaveFileName(caption='CSV file to export data to',
                                           directory=str(base_dir),
                                           filter='Text files (*.txt *.csv '
                                                  '*.dat)')
@@ -516,6 +580,24 @@ class MainWindow(QMainWindow):
       writer = DictWriter(csvfile, fieldnames=ret[0].keys())
       writer.writeheader()
       writer.writerows(ret)
+
+    # Ask the user for a location where to save the raw data in a pickle file
+    file, _ = QFileDialog.getSaveFileName(caption='Binary file to save the '
+                                                  'project to',
+                                          directory=str(base_dir),
+                                          filter='Pickle file (*.pickle)')
+    # If no location is given, abort
+    if not file:
+      return
+    # If no file extension is given, opt for csv by default
+    file = Path(file)
+    if not file.suffix:
+      file = file.with_suffix('.pickle')
+
+    # Save the data to a binary file for loading later
+    with open(file, 'wb') as pickle_file:
+      pickle.dump((self._img_folder, self.timepoints), pickle_file,
+                  protocol=pickle.HIGHEST_PROTOCOL)
 
   @pyqtSlot()
   def process_images(self) -> None:
