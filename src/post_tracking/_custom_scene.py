@@ -513,9 +513,9 @@ class CustomScene(QGraphicsScene):
       return
 
     # The radius is the average of the ones of the already detected spots
-    radius = mean(spot.radius for spot in chain(self._quadrant.well_1,
-                                                self._quadrant.well_2)
-                  if spot is not None and spot.radius is not None)
+    radius = int(mean(spot.radius for spot in chain(self._quadrant.well_1,
+                                                    self._quadrant.well_2)
+                      if spot is not None and spot.radius is not None))
 
     detected = Spot(int(event.scenePos().x()), int(event.scenePos().y()),
                     radius)
