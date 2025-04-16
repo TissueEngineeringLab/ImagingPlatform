@@ -132,7 +132,7 @@ def calibrate(img_path: Path,
   height, width, *_ = img.shape
   img = cv2.resize(img, (width // rescale_factor, height // rescale_factor))
   
-  # Keep only the relevant reagion of the image
+  # Keep only the relevant region of the image
   img_calib = np.full_like(img, 190)
   height, width, *_ = img.shape
   if img_path.name.endswith("0.png"):
