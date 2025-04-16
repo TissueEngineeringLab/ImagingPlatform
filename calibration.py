@@ -38,7 +38,6 @@ def find_corners(img: np.ndarray,
   # Perform the corner detection
   ret_val, corners = cv2.findChessboardCornersSB(thresh_img,
                                                  (n_rows, n_cols),
-                                                 None,
                                                  cv2.CALIB_CB_EXHAUSTIVE)
   
   if not ret_val:
