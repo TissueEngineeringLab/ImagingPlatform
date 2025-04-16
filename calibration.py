@@ -250,9 +250,8 @@ def calibrate(img_path: Path,
     plt.title("Effect of the correction")
     plt.show()
   
-  return (rescale_factor * pix_x / ((n_cols - 1) * chess_square_dim),
-          rescale_factor * pix_y / ((n_rows - 1) * chess_square_dim),
-          rescaled_matrix, distortion_coeffs, (roi_h, roi_w))
+  return (pix_mm_x, pix_mm_y, rescaled_matrix, distortion_coeffs,
+          (roi_h, roi_w))
 
 
 def crop_to_roi(img_path: Path, 
