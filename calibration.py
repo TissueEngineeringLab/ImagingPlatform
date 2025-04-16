@@ -275,7 +275,7 @@ def crop_to_roi(img_path: Path,
   """
   
   # Retrieve the correct calibration parameters for the provided image
-  idx = match(r'.*(\d)\.png', str(img_path.name)).groups()[0]
+  idx = match(r'.+?(\d)\.png', str(img_path.name)).groups()[0]
   if idx == '0':
     idxs = ('0', '4')
   elif idx == '1':
