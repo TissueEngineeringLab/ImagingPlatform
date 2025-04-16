@@ -289,7 +289,8 @@ def crop_to_roi(img_path: Path,
 
 if __name__ == "__main__":
   
-  calib_images = tuple(Path(".").glob("*.png"))
+  base_path = Path("/home/weis/Documents/BAMs_Mesoscoper/calib/")
+  calib_images = tuple(base_path.glob("*.png"))
   calib_params = dict()
   for path in tqdm(calib_images,
                    total=len(calib_images),
@@ -301,15 +302,15 @@ if __name__ == "__main__":
     calib_params[index] = calibrate(img_path=path, 
                                     n_rows=7, 
                                     n_cols=16, 
-                                    chess_square_dim=0.3, 
+                                    chess_square_dim=3.0,
                                     thresh=100, 
                                     show=False)
   
-  with open('./calib_params.pickle', 'wb') as pickle_file:
+  with open(base_path / 'calib_params.pickle', 'wb') as pickle_file:
     pickle.dump(calib_params, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-  
-  images = tuple(Path("..").glob("*.png"))
-  dest = Path("../cropped")
+
+  images = tuple(base_path.parent.glob("*.png"))
+  dest = Path(base_path.parent / "cropped")
   dest.mkdir(exist_ok=True, parents=True)
   with tqdm(total=len(images),
             desc='Extracting the regions of interest',
