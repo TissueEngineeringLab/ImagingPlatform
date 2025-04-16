@@ -324,24 +324,3 @@ if __name__ == "__main__":
                             chunksize=1):
         pbar.update()
         pbar.refresh()
-
-  if False:
-  
-    fx, fy, mat, coe, (roi_h, roi_w) = calibrate(Path("./2025_03_19_15_46_30_0.png"), 7, 16, 0.3, 100, False)
-    # fx, fy, mat, coe, (roi_h, roi_w) = calibrate(Path("./2025_03_19_15_46_39_1.png"), 7, 16, 0.3, 100, False)
-    # fx, fy, mat, coe, (roi_h, roi_w) = calibrate(Path("./2025_03_19_15_46_48_2.png"), 7, 16, 0.3, 100, False)
-    # fx, fy, mat, coe, (roi_h, roi_w) = calibrate(Path("./2025_03_19_15_46_56_3.png"), 7, 16, 0.3, 100, False)
-    
-    img = Path("/home/weis/Documents/BAMs_Mesoscoper/calib2/2025_02_26_14_53_34_0.png")
-    # img = Path("/home/weis/Documents/BAMs_Mesoscoper/calib2/2025_02_26_14_53_42_1.png")
-    # img = Path("/home/weis/Documents/BAMs_Mesoscoper/calib2/2025_02_26_14_53_50_2.png")
-    # img = Path("/home/weis/Documents/BAMs_Mesoscoper/calib2/2025_02_26_14_53_58_3.png")
-    img = cv2.imread(img)
-    img = undistort_image(img, mat, coe)
-    
-    plt.figure()
-    fxx = 1.0 if fx > fy else fy / fx
-    fyy = 1.0 if fy > fx else fx / fy
-    plt.imshow(cv2.resize(img[roi_h, roi_w], None, fx=fxx, fy=fyy)[:, :, ::-1])
-    plt.show()
-
