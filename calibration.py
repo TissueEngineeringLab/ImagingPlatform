@@ -129,8 +129,7 @@ def calibrate(img_path: Path,
   chess_pts[:, :2] = (np.mgrid[0:n_rows, 0:n_cols]).T.reshape(-1, 2)
   
   # Read the calibration image and resize it so that it is small enough
-  img = cv2.imread(img_path)
-  original = img.copy()
+  img = cv2.imread(str(img_path))
   height, width, *_ = img.shape
   img = cv2.resize(img, (width // rescale_factor, height // rescale_factor))
   
@@ -274,7 +273,7 @@ def crop_to_roi(img_path: Path,
   fx, fy, mat, coe, (roi_h, roi_w) = params[index]
   
   # Undistort the image using the correct parameters
-  img = cv2.imread(img_path)
+  img = cv2.imread(str(img_path))
   img = undistort_image(img, mat, coe)
   
   # Resize the image to have a 1:1 ratio between x and y
@@ -284,7 +283,7 @@ def crop_to_roi(img_path: Path,
   img = cv2.resize(img[roi_h, roi_w], None, fx=fxx, fy=fyy)
   
   # Write the cropped and corrected image at the given location
-  cv2.imwrite(dest_folder / img_path.name, img)
+  cv2.imwrite(str(dest_folder / img_path.name), img)
 
 
 if __name__ == "__main__":
