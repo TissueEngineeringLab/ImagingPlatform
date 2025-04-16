@@ -1,7 +1,6 @@
 # coding: utf-8
 
 from pathlib import Path
-import numpy as np
 import cv2
 from tqdm.auto import tqdm
 import sys
