@@ -97,7 +97,7 @@ def calibrate(img_path: Path,
                                            np.ndarray, np.ndarray, 
                                            tuple[slice, slice]]:
   """Performs a chessboard pattern detection on the provided image, and uses it
-  to determine the calibration and distotrion coefficients.
+  to determine the calibration and distortion coefficients.
   
   These values can then be used to correct the provided image.
   
