@@ -6,7 +6,7 @@ import cv2
 from matplotlib import pyplot as plt
 from tqdm.auto import tqdm
 from itertools import repeat
-from re import match
+from re import match, sub
 import sys
 import concurrent.futures
 import pickle
@@ -275,21 +275,34 @@ def crop_to_roi(img_path: Path,
   """
   
   # Retrieve the correct calibration parameters for the provided image
-  index = match(r'.*(\d)\.png', str(img_path.name)).groups()[0]
-  fx, fy, mat, coe, (roi_h, roi_w) = params[index]
-  
-  # Undistort the image using the correct parameters
-  img = cv2.imread(str(img_path))
-  img = undistort_image(img, mat, coe)
-  
-  # Resize the image to have a 1:1 ratio between x and y
-  # Also crop it to keep only the valid part of the image
-  fxx = 1.0 if fx > fy else fy / fx
-  fyy = 1.0 if fy > fx else fx / fy
-  img = cv2.resize(img[roi_h, roi_w], None, fx=fxx, fy=fyy)
-  
-  # Write the cropped and corrected image at the given location
-  cv2.imwrite(str(dest_folder / img_path.name), img)
+  idx = match(r'.*(\d)\.png', str(img_path.name)).groups()[0]
+  if idx == '0':
+    idxs = ('0', '4')
+  elif idx == '1':
+    idxs = ('1', '5')
+  elif idx == '2':
+    idxs = ('2',)
+  elif idx == '3':
+    idxs = ('3',)
+  else:
+    raise RuntimeError("Got image with wrong index")
+
+  for idx in idxs:
+    fx, fy, mat, coe, (roi_h, roi_w) = params[idx]
+
+    # Undistort the image using the correct parameters
+    img = cv2.imread(str(img_path))
+    img = undistort_image(img, mat, coe)
+
+    # Resize the image to have a 1:1 ratio between x and y
+    # Also crop it to keep only the valid part of the image
+    fxx = 1.0 if fx > fy else fy / fx
+    fyy = 1.0 if fy > fx else fx / fy
+    img = cv2.resize(img[roi_h, roi_w], None, fx=fxx, fy=fyy)
+
+    # Write the cropped and corrected image at the given location
+    name = sub(r"\d\.", f"{idx}.", img_path.name)
+    cv2.imwrite(str(dest_folder / name), img)
 
 
 if __name__ == "__main__":
