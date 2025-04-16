@@ -261,8 +261,8 @@ def calibrate(img_path: Path,
 
 def crop_to_roi(img_path: Path, 
                 dest_folder: Path,
-                params: tuple[float, float, np.ndarray, np.ndarray, 
-                              tuple[slice, slice]]) -> None:
+                params: dict[str, tuple[float, float, np.ndarray, np.ndarray,
+                                        tuple[slice, slice]]]) -> None:
   """Uses the parameters computed by the calibrate function to correct the 
   provided image, then crops it to the region of interest and saves it at the 
   indicated location.
