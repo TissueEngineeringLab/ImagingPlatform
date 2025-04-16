@@ -148,6 +148,8 @@ def calibrate(img_path: Path,
   elif img_path.name.endswith("3.png"):
     h_slice = slice(int(0.43 * height), int(0.76 * height), 1)
     w_slice = slice(int(0.19 * width), int(0.70 * width), 1)
+  else:
+    raise RuntimeError("Got image with wrong index")
   img_calib[h_slice, w_slice] = img[h_slice, w_slice]
   
   # Find the corners of the chessboard
