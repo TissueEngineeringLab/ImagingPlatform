@@ -25,4 +25,3 @@ if __name__ == "__main__":
       for _ in executor.map(flip_img, images, chunksize=1):
         pbar.update()
         pbar.refresh()
-
