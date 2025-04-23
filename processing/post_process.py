@@ -214,6 +214,8 @@ def plot_results(img_calib_file: Path,
   lim = ax.get_ylim()
   for t in refresh_timestamps:
     plt.vlines(t.total_seconds(), *lim, alpha=0.5)
+  plt.xlabel("Time in culture")
+  plt.ylabel("Force exerted by the BAM (mN)")
   plt.legend()
 
   plt.show()
