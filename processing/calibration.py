@@ -306,9 +306,13 @@ def crop_to_roi(img_path: Path,
 
 
 if __name__ == "__main__":
-  
+
+  # The calibration images are stored in a separate folder
   base_path = Path(__file__).parent
-  calib_images = tuple((base_path / "calib_images").glob("*.png"))
+  calib_images = tuple(chain((base_path / "calib_images").glob("*.png"),
+                             (base_path / "calib_images").glob("*.jpg")))
+
+  # First, compute the calibration parameters to correct the optical defects
   calib_params = dict()
   for path in tqdm(calib_images,
                    total=len(calib_images),
@@ -323,18 +327,22 @@ if __name__ == "__main__":
                                     chess_square_dim=3.0,
                                     thresh=100, 
                                     show=False)
-  
+
+  # Store the calibration parameters in a file
   with open(base_path / 'calib_params.pickle', 'wb') as pickle_file:
     pickle.dump(calib_params, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
+  # The images can be JPEG or PNG
   images = tuple(chain((base_path.parent / "images").glob("*.png"),
                        (base_path.parent / "images").glob("*.jpg")))
   dest = Path(base_path.parent / "cropped")
   dest.mkdir(exist_ok=True, parents=True)
+  # Iterating over all the images
   with tqdm(total=len(images),
             desc='Extracting the regions of interest',
             file=sys.stdout,
             colour='green') as pbar:
+    # Processing the images in a parallelized way for efficiency
     with concurrent.futures.ProcessPoolExecutor() as executor:
       for _ in executor.map(crop_to_roi, 
                             images, 
