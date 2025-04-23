@@ -307,7 +307,7 @@ def crop_to_roi(img_path: Path,
 
 if __name__ == "__main__":
   
-  base_path = Path(".")
+  base_path = Path(__file__).parent
   calib_images = tuple(base_path.glob("*.png"))
   calib_params = dict()
   for path in tqdm(calib_images,

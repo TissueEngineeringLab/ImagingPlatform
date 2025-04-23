@@ -17,7 +17,7 @@ def flip_img(img_pth: Path) -> None:
 
 if __name__ == "__main__":
 
-  base_path = Path('.')
+  base_path = Path(__file__).parent
   images = tuple(chain((base_path.parent / "images").glob("*.png"),
                        (base_path.parent / "images").glob("*.jpg")))
   with tqdm(total=len(images),

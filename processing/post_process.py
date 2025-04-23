@@ -188,7 +188,7 @@ def plot_results(calibration_file: Path,
 
 if __name__ == "__main__":
 
-  base_path = Path(".")
+  base_path = Path(__file__).parent
   calib_path = base_path / "calibration_pins.csv"
   plot_results(base_path / "calib_params.pickle",
                base_path / "results.csv",
