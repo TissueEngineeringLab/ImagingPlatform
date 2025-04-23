@@ -14,7 +14,8 @@ from itertools import batched, count, chain
 from csv import DictWriter
 import pickle
 
-from ._structure import TimePoint, path_to_time, Quadrant, path_to_str
+from ._structure import (TimePoint, path_to_time, Quadrant, path_to_str,
+                         get_quad_index)
 from ._custom_scene import CustomScene
 from ._post_frame import PostsParentFrame
 from ._tracking_worker import TrackingWorker
@@ -151,7 +152,7 @@ class MainWindow(QMainWindow):
 
     # Add a combo box for selecting the quadrant
     self._quadrant_combo = QComboBox()
-    self._quadrant_combo.insertItems(0, ('0', '1', '2', '3'))
+    self._quadrant_combo.insertItems(0, ('0', '1', '2', '3', '4', '5'))
     self._quadrant_combo.setFixedSize(QSize(80, 29))
     self._quadrant_combo.setEnabled(False)
     self._quadrant_combo.currentTextChanged.connect(self.select_quadrant)
@@ -463,7 +464,8 @@ class MainWindow(QMainWindow):
     # Sort the images in the source directory based on their timestamp
     self._img_folder = Path(folder)
     images = sorted(chain(Path(folder).glob('*.jpg'),
-                          Path(folder).glob('*.png')), key=path_to_time)
+                          Path(folder).glob('*.png')), key=get_quad_index)
+    images = sorted(images, key=path_to_time)
 
     # Reset all the information in the interface
     self.timepoints.clear()
@@ -471,9 +473,10 @@ class MainWindow(QMainWindow):
     self.quadrant = 0
 
     # Parses all the images and saves their information
-    for path_1, path_2, path_3, path_4 in batched(images, 4):
+    for path_1, path_5, path_2, path_6, path_3, path_4 in batched(images, 6):
       self.timepoints.append(TimePoint.parse_paths(path_1, path_2,
-                                                   path_3, path_4))
+                                                   path_3, path_4,
+                                                   path_5, path_6))
 
     # Emit signal for loading the first image
     self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])

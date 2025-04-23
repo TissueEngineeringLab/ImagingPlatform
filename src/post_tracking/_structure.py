@@ -8,9 +8,23 @@ from dataclasses import dataclass, field
 from typing import Optional, Iterator, List, Dict, Union
 from numpy import linalg
 from pathlib import Path
-from re import fullmatch
+from re import fullmatch, match
 from calendar import timegm
 from time import gmtime, strftime
+
+
+def get_quad_index(path: Path) -> int:
+  """Parses the path to an image and extracts the index of the quadrant that is
+  represented.
+
+  Args:
+    path: The Path object pointing to the image.
+
+  Returns:
+    The index of the quadrant captured in the image, as an integer.
+  """
+
+  return int(match(r".+?(\d+)\.(?:jpg|png)", path.name).groups()[0])
 
 
 def path_to_time(path: Path) -> float:
@@ -25,7 +39,7 @@ def path_to_time(path: Path) -> float:
   """
 
   return timegm(tuple(map(int, fullmatch(r'(\d+)_(\d+)_(\d+)_(\d+)_'
-                                         r'(\d+)_(\d+)_[0123]\.(?:jpg|png)',
+                                         r'(\d+)_(\d+)_[012345]\.(?:jpg|png)',
                                          path.name).groups())))
 
 
@@ -41,7 +55,7 @@ def path_to_str(path: Path) -> str:
   """
 
   return '{}/{}/{} {}:{}:{}'.format(*fullmatch(r'(\d+)_(\d+)_(\d+)_(\d+)_'
-                                               r'(\d+)_(\d+)_[0123]\.'
+                                               r'(\d+)_(\d+)_[012345]\.'
                                                r'(?:jpg|png)',
                                                path.name).groups())
 
@@ -176,20 +190,27 @@ class TimePoint:
   """Quadrant object whose image was acquired by camera 2."""
   D: Quadrant
   """Quadrant object whose image was acquired by camera 3."""
+  E: Quadrant
+  """Middle quadrant object whose image was acquired by cameras 0 and 2."""
+  F: Quadrant
+  """Middle quadrant object whose image was acquired by cameras 1 and 3."""
 
   @classmethod
   def parse_paths(cls,
                   path_1: Path,
                   path_2: Path,
                   path_3: Path,
-                  path_4: Path) -> TimePoint:
+                  path_4: Path,
+                  path_5: Path,
+                  path_6: Path) -> TimePoint:
     """Given four paths to acquired images, creates an instance of the
     TimePoint class containing four the quadrants associated with these images.
     """
 
     # Associate each image to a quadrant
-    path_a, path_b, path_c, path_d = None, None, None, None
-    for path in (path_1, path_2, path_3, path_4):
+    path_a, path_b, path_c, path_d, path_e, path_f = (
+      None, None, None, None, None, None)
+    for path in (path_1, path_2, path_3, path_4, path_5, path_6):
       if path.name.endswith('0.png') or path.name.endswith('0.jpg'):
         path_a = path
         continue
@@ -202,9 +223,16 @@ class TimePoint:
       elif path.name.endswith('3.png') or path.name.endswith('3.jpg'):
         path_d = path
         continue
+      elif path.name.endswith('4.png') or path.name.endswith('4.jpg'):
+        path_e = path
+        continue
+      elif path.name.endswith('5.png') or path.name.endswith('5.jpg'):
+        path_f = path
+        continue
 
     # Ensure that all four quadrants were found
-    if any(path is None for path in (path_a, path_b, path_c, path_d)):
+    if any(path is None for path in (path_a, path_b, path_c, path_d,
+                                     path_e, path_f)):
       raise FileNotFoundError
 
     # Get the timestamp for each image
@@ -213,6 +241,8 @@ class TimePoint:
       time_b = path_to_time(path_b)
       time_c = path_to_time(path_c)
       time_d = path_to_time(path_d)
+      time_e = path_to_time(path_e)
+      time_f = path_to_time(path_f)
     except AttributeError:
       raise
 
@@ -220,7 +250,9 @@ class TimePoint:
     return cls(Quadrant(path_a, time_a, 0),
                Quadrant(path_b, time_b, 1),
                Quadrant(path_c, time_c, 2),
-               Quadrant(path_d, time_d, 3))
+               Quadrant(path_d, time_d, 3),
+               Quadrant(path_e, time_e, 4),
+               Quadrant(path_f, time_f, 5))
 
   def export(self) -> List[Dict[str, Optional[Union[str, float, int]]]]:
     """Method called for formatting the acquired data before saving it in a
@@ -271,9 +303,9 @@ class TimePoint:
     return ret
 
   def __iter__(self) -> Iterator[Quadrant]:
-    """Iterates over the quadrants, in the order 0, 1, 2, 3."""
+    """Iterates over the quadrants, in the order 0, 1, 2, 3, 4, 5."""
 
-    return iter((self.A, self.B, self.C, self.D))
+    return iter((self.A, self.B, self.C, self.D, self.E, self.F))
 
   def __getitem__(self, item: int) -> Quadrant:
     """Allows to get the quadrant objects by index, for convenience."""
@@ -286,6 +318,10 @@ class TimePoint:
       return self.C
     elif item == 3:
       return self.D
+    elif item == 4:
+      return self.E
+    elif item == 5:
+      return self.F
 
     else:
       raise AttributeError
@@ -294,4 +330,4 @@ class TimePoint:
     """Returns True if any of the quadrants has at least one defined well,
     False otherwise."""
 
-    return any((self.A, self.B, self.C, self.D))
+    return any((self.A, self.B, self.C, self.D, self.E, self.F))
