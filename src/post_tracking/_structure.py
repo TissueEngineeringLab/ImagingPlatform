@@ -90,7 +90,7 @@ class Well:
 
     # Compute and return the distance
     diff = self.spot_1 - self.spot_2
-    return linalg.norm((diff.x, diff.y))
+    return float(linalg.norm((diff.x, diff.y)))
 
   @property
   def is_defined(self) -> bool:
@@ -242,11 +242,12 @@ class TimePoint:
     for quad in self:
       for well in quad:
         # For each spot, saving at least its quadrant, well, and timestamp
-        item = dict(timestamp_seconds=quad.acq_time,
-                    timestamp_human=strftime('%d/%m/%Y %H:%M:%S',
-                                             gmtime(quad.acq_time)),
-                    quadrant=quad.id,
-                    well=well.id)
+        item: dict[str, int | None] = dict(
+          timestamp_seconds=quad.acq_time,
+          timestamp_human=strftime('%d/%m/%Y %H:%M:%S',
+                                   gmtime(quad.acq_time)),
+          quadrant=quad.id,
+          well=well.id)
         # Checking if the left spot is detected, and saving its data if so
         if well.spot_1 is not None:
           item['spot_1_x'] = well.spot_1.x
