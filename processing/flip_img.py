@@ -5,6 +5,7 @@ import cv2
 from tqdm.auto import tqdm
 import sys
 import concurrent.futures
+from itertools import chain
 
 
 def flip_img(img_pth: Path) -> None:
@@ -15,8 +16,10 @@ def flip_img(img_pth: Path) -> None:
 
 
 if __name__ == "__main__":
-  
-  images = tuple(Path("..").glob("*.png"))
+
+  base_path = Path('.')
+  images = tuple(chain((base_path.parent / "images").glob("*.png"),
+                       (base_path.parent / "images").glob("*.jpg")))
   with tqdm(total=len(images),
             desc='Flipping the images',
             file=sys.stdout,

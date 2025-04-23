@@ -188,8 +188,8 @@ def plot_results(calibration_file: Path,
 
 if __name__ == "__main__":
 
-  base_path = Path("/home/weis/Documents/BAMs_Mesoscoper/calib/")
-  calib_path = Path("/home/weis/Codes/ImagingPlatform/calibration_pins.csv")
+  base_path = Path(".")
+  calib_path = base_path / "calibration_pins.csv"
   plot_results(base_path / "calib_params.pickle",
-               base_path.parent / "cropped" / "results3.csv",
+               base_path / "results.csv",
                calib_path)

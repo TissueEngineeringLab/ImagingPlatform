@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from tqdm.auto import tqdm
-from itertools import repeat
+from itertools import repeat, chain
 from re import match, sub
 import sys
 import concurrent.futures
@@ -307,7 +307,7 @@ def crop_to_roi(img_path: Path,
 
 if __name__ == "__main__":
   
-  base_path = Path("/home/weis/Documents/BAMs_Mesoscoper/calib/")
+  base_path = Path(".")
   calib_images = tuple(base_path.glob("*.png"))
   calib_params = dict()
   for path in tqdm(calib_images,
@@ -327,7 +327,8 @@ if __name__ == "__main__":
   with open(base_path / 'calib_params.pickle', 'wb') as pickle_file:
     pickle.dump(calib_params, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
-  images = tuple(base_path.parent.glob("*.png"))
+  images = tuple(chain((base_path.parent / "images").glob("*.png"),
+                       (base_path.parent / "images").glob("*.jpg")))
   dest = Path(base_path.parent / "cropped")
   dest.mkdir(exist_ok=True, parents=True)
   with tqdm(total=len(images),
