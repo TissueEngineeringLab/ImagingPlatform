@@ -403,21 +403,9 @@ class MainWindow(QMainWindow):
     Loads the associated image and data.
     """
 
-    val = -1
-
     # Unlike the timestamps, the quadrant selection is circular
-    if self.quadrant == 0:
-      self.quadrant = 3
-      val = 3
-    elif self.quadrant == 1:
-      self.quadrant = 0
-      val = 0
-    elif self.quadrant == 2:
-      self.quadrant = 1
-      val = 1
-    elif self.quadrant == 3:
-      self.quadrant = 2
-      val = 2
+    val = (self.quadrant - 1) % 6
+    self.quadrant = (self.quadrant - 1) % 6
 
     self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
     self.quadrant_changed.emit(val)
@@ -429,21 +417,9 @@ class MainWindow(QMainWindow):
     Loads the associated image and data.
     """
 
-    val = -1
-
     # Unlike the timestamps, the quadrant selection is circular
-    if self.quadrant == 0:
-      self.quadrant = 1
-      val = 1
-    elif self.quadrant == 1:
-      self.quadrant = 2
-      val = 2
-    elif self.quadrant == 2:
-      self.quadrant = 3
-      val = 3
-    elif self.quadrant == 3:
-      self.quadrant = 0
-      val = 0
+    val = (self.quadrant + 1) % 6
+    self.quadrant = (self.quadrant + 1) % 6
 
     self.image_loaded.emit(self.timepoints[self._time_idx][self.quadrant])
     self.quadrant_changed.emit(val)
