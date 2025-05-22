@@ -5,8 +5,8 @@ and the detected spots."""
 
 from PyQt6.QtWidgets import (QGraphicsScene, QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QGraphicsEllipseItem,
-                             QGraphicsView)
-from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush
+                             QGraphicsView, QMainWindow)
+from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush, QKeyEvent
 from PyQt6.QtCore import QRectF, Qt, pyqtSignal, pyqtSlot, QPoint
 from typing import List, Optional
 from PIL import Image
@@ -26,16 +26,18 @@ class CustomScene(QGraphicsScene):
   """Signal emitted whenever a post is detected after manual selection of an 
   area to search by the user"""
 
-  def __init__(self, view: QGraphicsView) -> None:
+  def __init__(self, view: QGraphicsView, main: QMainWindow) -> None:
     """Sets the attributes used in this class.
 
     Args:
       view: The parent QGraphicsView in which the scene is included.
+      main: The parent main window containing the entire interface.
     """
 
     # Initialize the parent class and handle the argument
     super().__init__()
     self._view = view
+    self._main = main
 
     # These attributes are dynamically set
     self.img: Optional[Image] = None
@@ -535,3 +537,35 @@ class CustomScene(QGraphicsScene):
 
     # Accept event to make sure it's not handled elsewhere
     event.accept()
+
+  def keyPressEvent(self, event: QKeyEvent) -> None:
+    """Event triggered when a keyboard touch is pressed.
+
+    Overridden here to catch the page up and page down keys and prevent them
+    from affecting the scene.
+
+    Args:
+      event: The event triggered by the key press.
+    """
+
+    if event.key() in (Qt.Key.Key_PageUp, Qt.Key.Key_PageDown):
+      self._main.keyPressEvent(event)
+      event.accept()
+    else:
+      super().keyPressEvent(event)
+
+  def keyReleaseEvent(self, event: QKeyEvent) -> None:
+    """Event triggered when a keyboard touch is released.
+
+    Overridden here to catch the page up and page down keys and prevent them
+    from affecting the scene.
+
+    Args:
+      event: The event triggered by the key release.
+    """
+
+    if event.key() in (Qt.Key.Key_PageUp, Qt.Key.Key_PageDown):
+      self._main.keyReleaseEvent(event)
+      event.accept()
+    else:
+      super().keyReleaseEvent(event)

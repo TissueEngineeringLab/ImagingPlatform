@@ -3,10 +3,11 @@
 """This file contains the definition of the MainWindow class that generates the
 graphical interface."""
 
-from PyQt6.QtCore import QSize, pyqtSignal, pyqtSlot, QThreadPool
+from PyQt6.QtCore import QSize, pyqtSignal, pyqtSlot, QThreadPool, Qt
 from PyQt6.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QHBoxLayout,
                              QWidget, QComboBox, QPushButton, QGraphicsView,
                              QProgressBar, QFileDialog)
+from PyQt6.QtGui import QKeyEvent
 from pyqtgraph import PlotWidget, DateAxisItem, mkPen
 from typing import Optional, Union, List, Dict
 from pathlib import Path
@@ -198,7 +199,7 @@ class MainWindow(QMainWindow):
 
     # Add a window for displaying the current image
     self._view = QGraphicsView()
-    self.scene = CustomScene(self._view)
+    self.scene = CustomScene(self._view, self)
     self._view.setScene(self.scene)
     self._left_panel_layout.addWidget(self._view)
 
@@ -615,3 +616,32 @@ class MainWindow(QMainWindow):
       self._process_button.setEnabled(True)
     else:
       self._process_button.setEnabled(False)
+
+  def keyReleaseEvent(self, event: QKeyEvent) -> None:
+    """Event triggered when a keyboard touch is released.
+
+    Thanks to this method, the selected post can be changed using the digits,
+    the current post can be deleted using the suppr. or delete keys, and the
+    page up and page down keys allow to navigate the timestamps.
+
+    Args:
+      event: The event triggered by the key release.
+    """
+
+    # The digits are used for changing the selected post in the scene
+    if event.text() in ('0', '1', '2', '3'):
+      self.posts_table.selected = int(event.text())
+      event.accept()
+    # The suppr. and delete keys are used for deleting the current post
+    elif event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+      self.posts_table.frames[self.posts_table.selected].delete_button.click()
+      event.accept()
+    # The page up and page down keys are used for navigating the timestamps
+    elif event.key() == Qt.Key.Key_PageUp:
+      self._next_time_button.click()
+      event.accept()
+    elif event.key() == Qt.Key.Key_PageDown:
+      self._prev_time_button.click()
+      event.accept()
+    else:
+      super().keyReleaseEvent(event)
