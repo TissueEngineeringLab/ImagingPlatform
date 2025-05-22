@@ -74,14 +74,14 @@ class SinglePostFrame(QFrame, QWidget):
     self._h_layout.addWidget(self._r_label)
 
     # Button for deleting a detected spot and all the associated information
-    self._delete_button = QPushButton()
-    self._delete_button.setIcon(self.style().standardIcon(
+    self.delete_button = QPushButton()
+    self.delete_button.setIcon(self.style().standardIcon(
       QStyle.StandardPixmap.SP_TrashIcon))
-    self._delete_button.clicked.connect(self.reset_text)
-    self._delete_button.clicked.connect(self.delete_post)
-    self._delete_button.setFixedHeight(30)
-    self._delete_button.setFixedWidth(30)
-    self._h_layout.addWidget(self._delete_button)
+    self.delete_button.clicked.connect(self.reset_text)
+    self.delete_button.clicked.connect(self.delete_post)
+    self.delete_button.setFixedHeight(30)
+    self.delete_button.setFixedWidth(30)
+    self._h_layout.addWidget(self.delete_button)
 
     # Upon clicking on the frame, make it the new selected one
     self.clicked.connect(self.select_entry)
@@ -241,8 +241,8 @@ class PostsParentFrame(QFrame):
     self._posts_layout.addWidget(self._post_2_r_frame)
 
     # Tuple used for convenience later
-    self._frames = (self._post_1_l_frame, self._post_1_r_frame,
-                    self._post_2_l_frame, self._post_2_r_frame)
+    self.frames = (self._post_1_l_frame, self._post_1_r_frame,
+                   self._post_2_l_frame, self._post_2_r_frame)
 
     # Spacer at the end of the frame for layout purpose
     self._spacer_frame = QFrame()
@@ -374,12 +374,13 @@ class PostsParentFrame(QFrame):
     window, without using the mouse.
     """
 
-    for frame in self._frames:
+    for frame in self.frames:
       if frame.selected:
         return frame.index
+    return 0
 
   @selected.setter
   def selected(self, index: int) -> None:
     if index not in range(4):
       raise ValueError
-    self._frames[index].soft_select()
+    self.frames[index].soft_select()
