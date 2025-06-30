@@ -128,7 +128,7 @@ def plot_results(img_calib_file: Path,
                res[(res['quadrant'] == quad) &
                    (res['well'] == well)]['timestamp_seconds'].values)),
       savgol_filter(res[(res['quadrant'] == quad) &
-                        (res['well'] == well)]['Distance px'].values, 40, 3)]
+                        (res['well'] == well)]['Distance px'].values, 7, 3)]
     # Convert to mm, and offset the distance and the time to the first values
     dist_dict[quad][well][1] /= ratio
     dist_dict[quad][well][1] -= np.mean(dist_dict[quad][well][1][:20])
