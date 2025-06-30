@@ -138,7 +138,7 @@ def plot_results(img_calib_file: Path,
   # From the computed distance, calculate the effort for each well and moment
   force_dict = deepcopy(dist_dict)
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
-    sign = np.sign(force_dict[quad][well][1])
+    sign = - np.sign(force_dict[quad][well][1])
     force_dict[quad][well][1] = force_interp(
       abs(dist_dict[quad][well][1]),
       label_to_length[pos_to_label[(quad, well)]])
