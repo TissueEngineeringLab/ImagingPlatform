@@ -52,10 +52,17 @@ refreshments = ("28/02/2025 16:53:34",
                 "17/03/2025 14:53:34")
 
 
-def formatter(x: float, _) -> str:
+def formatter_d_h(x: float, _) -> str:
   """Helper function for a nicer display of time on the generated graphs."""
 
   return f"{x // (3600 * 24)}d, {(x % (3600 * 24)) // 3600}h"
+
+
+def formatter_d(x: float, _) -> str:
+  """Helper function for a nicer display of time on the generated graphs."""
+
+  # return f"{(x // (3600 * 24)) + (x % (3600 * 24)) / (3600 * 24):.1f}"
+  return str(2 + int(x // (3600 * 24)))
 
 
 def plot_results(img_calib_file: Path,
@@ -149,7 +156,7 @@ def plot_results(img_calib_file: Path,
   # Plot the distance vs time chart, with a color for each well
   plt.figure()
   ax = plt.subplot()
-  ax.xaxis.set_major_formatter(formatter)
+  ax.xaxis.set_major_formatter(formatter_d_h)
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
     plt.plot([t.total_seconds() for t in dist_dict[quad][well][0]],
              dist_dict[quad][well][1], label=pos_to_label[(quad, well)])
@@ -163,7 +170,7 @@ def plot_results(img_calib_file: Path,
   # Plot the distance vs time chart, with a color for each condition
   plt.figure()
   ax = plt.subplot()
-  ax.xaxis.set_major_formatter(formatter)
+  ax.xaxis.set_major_formatter(formatter_d_h)
   labels = list()
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
     if pos_to_label[(quad, well)].endswith(("1", "2")):
@@ -186,7 +193,7 @@ def plot_results(img_calib_file: Path,
   # Plot the force vs time chart, with a color for each well
   plt.figure()
   ax = plt.subplot()
-  ax.xaxis.set_major_formatter(formatter)
+  ax.xaxis.set_major_formatter(formatter_d_h)
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
     plt.plot([t.total_seconds() for t in force_dict[quad][well][0]],
              force_dict[quad][well][1], label=pos_to_label[(quad, well)])
@@ -200,7 +207,7 @@ def plot_results(img_calib_file: Path,
   # Plot the force vs time chart, with a color for each condition
   plt.figure()
   ax = plt.subplot()
-  ax.xaxis.set_major_formatter(formatter)
+  ax.xaxis.set_major_formatter(formatter_d_h)
   labels = list()
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
     if pos_to_label[(quad, well)].endswith(("1", "2")):
