@@ -54,7 +54,8 @@ def find_corners(img: np.ndarray,
 
 def undistort_image(img: np.ndarray, 
                     camera_matrix: np.ndarray, 
-                    distortion_coeffs: np.ndarray) -> np.ndarray:
+                    distortion_coeffs: np.ndarray) -> tuple[np.ndarray,
+                                                            np.ndarray]:
   """Corrects the distortion on the given image, based on the provided matrix 
   and coefficients computed previously.
   
@@ -66,7 +67,7 @@ def undistort_image(img: np.ndarray,
       cv2.calibrateCamera method.
   
   Returns:
-    The corrected image as a numpy array.
+    The corrected image as a numpy array, and its camera correction matrix.
   """
   
   height, width, *_ = img.shape
@@ -169,13 +170,28 @@ def calibrate(img_path: Path,
                                               None)
   
   # Correct the distortion on the original image
-  undistorted = undistort_image(img, 
-                                camera_matrix,
-                                distortion_coeffs)
+  undistorted, new_camera_matrix = undistort_image(img,
+                                                   camera_matrix,
+                                                   distortion_coeffs)
+
+  # Get the new coordinates of the ROI in the undistorted image
+  undist_pts = cv2.undistortPoints(np.array(((w_slice.start,
+                                              h_slice.start),
+                                             (w_slice.stop,
+                                              h_slice.stop)),
+                                            dtype=np.float64),
+                                   camera_matrix,
+                                   distortion_coeffs,
+                                   None,
+                                   P=new_camera_matrix).squeeze()
+
+  h_slice_dist = slice(int(undist_pts[0, 1]), int(undist_pts[1, 1]), 1)
+  w_slice_dist = slice(int(undist_pts[0, 0]), int(undist_pts[1, 0]), 1)
   
   # Detect the chessboard pattern on the corrected image
   undist_calib = np.full_like(img_calib, 190)
-  undist_calib[h_slice, w_slice] = undistorted[h_slice, w_slice]
+  undist_calib[h_slice_dist, w_slice_dist] = undistorted[h_slice_dist,
+                                                         w_slice_dist]
   corners_undistorted, ret_corn_undist = find_corners(undist_calib,
                                                       n_rows,
                                                       n_cols)
