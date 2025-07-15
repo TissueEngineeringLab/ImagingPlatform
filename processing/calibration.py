@@ -13,7 +13,6 @@ import pickle
 
 
 def find_corners(img: np.ndarray,
-                 thresh: int,
                  n_rows: int,
                  n_cols: int) -> tuple[np.ndarray, bool]:
   """Finds the corners of a chessboard pattern on the provided image, and 
@@ -21,8 +20,6 @@ def find_corners(img: np.ndarray,
   
   Args:
     img: The image in which to search the chessboard pattern, as a numpy array.
-    thresh: The intensity threshold to use for performing binarization on the
-      image, as an integer.
     n_rows: The number of rows in the chessboard, minus one.
     n_cols: The number of columns in the chessboard, minus one.
   
@@ -33,7 +30,8 @@ def find_corners(img: np.ndarray,
   
   # A black and white image is needed to find the corners
   gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  _, thresh_img = cv2.threshold(gray_img, thresh, 255, cv2.THRESH_BINARY)
+  _, thresh_img = cv2.threshold(gray_img, 0, 255,
+                                cv2.THRESH_BINARY + cv2.THRESH_OTSU)
   
   # Perform the corner detection
   ret_val, corners = cv2.findChessboardCornersSB(thresh_img,
@@ -92,7 +90,6 @@ def calibrate(img_path: Path,
               n_rows: int,
               n_cols: int,
               chess_square_dim: float,
-              thresh: int = 100,
               show: bool = False) -> tuple[float, float, 
                                            np.ndarray, np.ndarray, 
                                            tuple[slice, slice]]:
@@ -108,8 +105,6 @@ def calibrate(img_path: Path,
     n_rows: The number of rows in the chessboard, minus one.
     n_cols: The number of columns in the chessboard, minus one.
     chess_square_dim:
-    thresh: An intensity threshold to use for performing binarization on the
-      image, as an integer.
     show: A boolean indicating whether to display images summarizing the output 
       of the calibration.
   Returns:
@@ -159,7 +154,6 @@ def calibrate(img_path: Path,
   
   # Find the corners of the chessboard
   detected_corners, ret_find_corn = find_corners(img_calib,
-                                                 thresh,
                                                  n_rows,
                                                  n_cols)
   
@@ -183,7 +177,6 @@ def calibrate(img_path: Path,
   undist_calib = np.full_like(img_calib, 190)
   undist_calib[h_slice, w_slice] = undistorted[h_slice, w_slice]
   corners_undistorted, ret_corn_undist = find_corners(undist_calib,
-                                                      thresh,
                                                       n_rows,
                                                       n_cols)
   # Reshape to match grid size
@@ -325,7 +318,6 @@ if __name__ == "__main__":
                                     n_rows=7, 
                                     n_cols=16, 
                                     chess_square_dim=3.0,
-                                    thresh=100, 
                                     show=False)
 
   # Store the calibration parameters in a file
