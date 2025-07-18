@@ -3,3 +3,6 @@ Pillow
 opencv-python
 pyqt6
 pyqtgraph
+matplotlib
+pandas
+scipy
