@@ -65,6 +65,13 @@ def formatter_d(x: float, _) -> str:
   return str(2 + int(x // (3600 * 24)))
 
 
+def formatter_contour(value: float) -> str:
+  """Helper function for a nicer display of contour labels on the generated
+  graphs."""
+
+  return f"{value:.1f} mN"
+
+
 def plot_results(img_calib_file: Path,
                  results_file: Path,
                  pins_calib_file: Path) -> None:
@@ -96,22 +103,46 @@ def plot_results(img_calib_file: Path,
               calib_data["Length (mm)"].values), axis=1),
     calib_data["Force (mN)"].values)
 
+  plt.figure(figsize=(11, 9))
+  for val in calib_data["Length (mm)"].unique():
+    plt.plot(calib_data["Distance (mm)"][calib_data["Length (mm)"]
+                                         == val].values,
+             calib_data["Force (mN)"][calib_data["Length (mm)"] == val].values,
+             label=str(float(val)))
+  plt.legend(title='Pin length (mm)', loc='upper left', fontsize=12,
+             title_fontsize=12)
+  plt.xlabel("Pin displacement (mm)", fontsize=12)
+  plt.ylabel("Force (mN)", fontsize=12)
+  plt.xticks(fontsize=12)
+  plt.yticks(fontsize=12)
+  ax = plt.gca()
+  ax.spines[['right', 'top']].set_visible(False)
+  # plt.savefig('./calib_curves.svg', dpi=300)
+  plt.show()
+
   # Plot the output of the pin calibration, to ensure it is correct
-  plt.figure()
+  plt.figure(figsize=(12, 9))
   dist_grid = np.linspace(calib_data["Distance (mm)"].min(),
                           calib_data["Distance (mm)"].max())
   length_grid = np.linspace(calib_data["Length (mm)"].min(),
                             calib_data["Length (mm)"].max())
   grid = np.meshgrid(dist_grid, length_grid)
   force_grid = force_interp(*grid)
-  plt.pcolormesh(*grid, force_grid, shading='auto', cmap="plasma")
+  plt.pcolormesh(*grid, force_grid, shading='auto', cmap="Greens")
   plt.plot(calib_data["Distance (mm)"].values,
-           calib_data["Length (mm)"].values, "ok", label="Data points")
-  plt.legend()
-  plt.xlabel("Pin displacement (mm)")
-  plt.ylabel("Pin length (mm)")
-  plt.colorbar(label="Force (mN)")
-  plt.contour(*grid, force_grid, cmap="GnBu")
+           calib_data["Length (mm)"].values, "+k", label="Data points",
+           markersize=3)
+  plt.legend(fontsize=12, loc='upper left')
+  plt.xlabel("Pin displacement (mm)", fontsize=12)
+  plt.xticks((0, 1, 2, 3, 4), fontsize=12)
+  plt.yticks(fontsize=12)
+  plt.ylabel("Pin length (mm)", fontsize=12)
+  cbar = plt.colorbar()
+  cbar.set_label(label="Force (mN)", size=12)
+  cbar.ax.tick_params(labelsize=12)
+  c = plt.contour(*grid, force_grid, colors=('black',), levels=(0.5, 1, 2, 3, 4))
+  plt.clabel(c, c.levels, fmt=formatter_contour)
+  plt.savefig('./calib_map.svg', dpi=300)
   plt.show()
 
   # Compute the distance between the pins in mm for each moment and each well
@@ -226,6 +257,49 @@ def plot_results(img_calib_file: Path,
   plt.xlabel("Time in culture")
   plt.ylabel("Force exerted by the BAM (mN)")
   plt.legend()
+
+  plt.show()
+
+  plt.figure(figsize=(8, 5))
+  ax = plt.subplot()
+  ax.xaxis.set_major_formatter(formatter_d)
+  values = dict()
+  times = dict()
+  count = dict()
+  for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
+    if pos_to_label[(quad, well)] in ("A2", "B1"):
+      continue
+    if pos_to_label[(quad, well)].startswith("A"):
+      label = "Prolif. med."
+    elif pos_to_label[(quad, well)].startswith("B"):
+      label = "Prolif. + diff. med."
+    else:
+      label = "Diff. med."
+
+    if label not in values:
+      values[label] = force_dict[quad][well][1]
+    else:
+      values[label] += force_dict[quad][well][1]
+    if label not in times:
+      times[label] = force_dict[quad][well][0]
+    if label not in count:
+      count[label] = 1
+    else:
+      count[label] += 1
+
+  for label in values.keys():
+    plt.plot([t.total_seconds() for t in times[label]],
+             values[label] / count[label], label=label)
+  lim = ax.get_ylim()
+  for t in (refresh_timestamps[0],
+            refresh_timestamps[2],
+            refresh_timestamps[6]):
+    plt.vlines(t.total_seconds(), *lim, alpha=0.5, color='black')
+  plt.xlabel("Time in culture (days)", fontsize=12, labelpad=8)
+  plt.ylabel("Force (mN)", fontsize=12, labelpad=8)
+  plt.legend()
+  ax.xaxis.set_ticks(np.arange(0.0, 3600 * 24 * 19 + 1, 3600 * 24))
+  plt.savefig('./force_graph.svg', dpi=300)
 
   plt.show()
 
