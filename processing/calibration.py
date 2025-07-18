@@ -84,7 +84,7 @@ def undistort_image(img: np.ndarray,
                               distortion_coeffs, 
                               None, 
                               new_camera_matrix)
-  return undistorted
+  return undistorted, new_camera_matrix
 
 
 def calibrate(img_path: Path,
