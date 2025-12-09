@@ -27,29 +27,30 @@ pos_to_label = {(0, 0): "A2",
                 (5, 1): "B3"}
 
 # For each well, the effective length of the pin as measured
-label_to_length = {"A1": 5.0,
-                   "A2": 5.0,
-                   "A3": 5.5,
-                   "A4": 5.7,
-                   "B1": 5.2,
-                   "B2": 5.3,
-                   "B3": 5.1,
-                   "B4": 5.9,
-                   "C1": 4.9,
-                   "C2": 5.0,
-                   "C3": 5.8,
-                   "C4": 5.2}
+label_to_length = {"A1": 6.0,
+                   "A2": 6.0,
+                   "A3": 6.0,
+                   "A4": 6.0,
+                   "B1": 6.0,
+                   "B2": 6.0,
+                   "B3": 6.0,
+                   "B4": 6.0,
+                   "C1": 6.0,
+                   "C2": 6.0,
+                   "C3": 6.0,
+                   "C4": 6.0}
 
 # Indicates the moments when the medium was refreshed
-refreshments = ("28/02/2025 16:53:34",
-                "02/03/2025 17:53:34",
-                "04/03/2025 17:53:34",
-                "06/03/2025 16:53:34",
-                "08/03/2025 20:53:34",
-                "10/03/2025 16:53:34",
-                "12/03/2025 16:53:34",
-                "14/03/2025 18:53:34",
-                "17/03/2025 14:53:34")
+refreshments = ("01/05/2025 13:36:35",
+                "03/05/2025 11:36:35",
+                "05/05/2025 13:36:35",
+                "07/05/2025 13:36:35",
+                "09/05/2025 13:36:35",
+                "11/05/2025 12:36:35",
+                "12/05/2025 12:36:35",
+                "14/05/2025 12:36:35",
+                "16/05/2025 12:36:35",
+                "18/05/2025 12:36:35")
 
 
 def formatter_d_h(x: float, _) -> str:
@@ -204,12 +205,15 @@ def plot_results(img_calib_file: Path,
   ax.xaxis.set_major_formatter(formatter_d_h)
   labels = list()
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
-    if pos_to_label[(quad, well)].endswith(("1", "2")):
+    if pos_to_label[(quad, well)].startswith("A"):
       color = 'red'
-      label = "0.5M cells"
+      label = "Ultroser 14"
+    elif pos_to_label[(quad, well)].startswith("B"):
+      color = 'green'
+      label = "SKFM 7, Ultroser 7"
     else:
       color = 'blue'
-      label = "1M cells"
+      label = "SKFM 14"
     plt.plot([t.total_seconds() for t in force_dict[quad][well][0]],
              dist_dict[quad][well][1], color=color,
              label=label if label not in labels else None)
@@ -241,12 +245,16 @@ def plot_results(img_calib_file: Path,
   ax.xaxis.set_major_formatter(formatter_d_h)
   labels = list()
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
-    if pos_to_label[(quad, well)].endswith(("1", "2")):
+    print(f"{pos_to_label[(quad, well)]}: {force_dict[quad][well][1][-1]:.2f}")
+    if pos_to_label[(quad, well)].startswith("A"):
       color = 'red'
-      label = "0.5M cells"
+      label = "Ultroser 14"
+    elif pos_to_label[(quad, well)].startswith("B"):
+      color = 'green'
+      label = "SKFM 7, Ultroser 7"
     else:
       color = 'blue'
-      label = "1M cells"
+      label = "SKFM 14"
     plt.plot([t.total_seconds() for t in force_dict[quad][well][0]],
              force_dict[quad][well][1], color=color,
              label=label if label not in labels else None)
@@ -266,13 +274,18 @@ def plot_results(img_calib_file: Path,
   values = dict()
   times = dict()
   count = dict()
+  col_to_lab = {'Prolif. med.': 'blue',
+                'Diff. med.': 'orange',
+                'Diff. - prolif. med.': 'green'}
+  lab_to_style = {'Prolif. med.': ':',
+                  'Diff. med.': '--',
+                  'Diff. - prolif. med.': '-.'}
+  labs = set()
   for quad, well in product((0, 1, 2, 3, 4, 5), (0, 1)):
-    if pos_to_label[(quad, well)] in ("A2", "B1"):
-      continue
     if pos_to_label[(quad, well)].startswith("A"):
       label = "Prolif. med."
     elif pos_to_label[(quad, well)].startswith("B"):
-      label = "Prolif. + diff. med."
+      label = "Diff. - prolif. med."
     else:
       label = "Diff. med."
 
