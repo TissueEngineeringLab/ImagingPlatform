@@ -301,6 +301,12 @@ def plot_results(img_calib_file: Path,
     else:
       count[label] += 1
 
+    plt.plot([t.total_seconds() for t in times[label]],
+             force_dict[quad][well][1], color=col_to_lab[label],
+             alpha=0.2, linestyle=lab_to_style[label],
+             label=label if label not in labs else None)
+    labs.add(label)
+
   for label in values.keys():
     plt.plot([t.total_seconds() for t in times[label]],
              values[label] / count[label], label=label + ' (avg.)')
