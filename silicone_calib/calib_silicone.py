@@ -142,6 +142,12 @@ if __name__ == '__main__':
   force = np.delete(force, (1, 3, 6, 14), 0)
 
   simu_data = pd.read_csv('./flexion_simu.csv')
+  
+  a = np.interp(pos, simu_data['U(mm)'],
+                simu_data['RF(mN) ssvisco encas surf'])[pos < 2.7]
+  b = np.mean(force, axis=0)[pos < 2.7]
+  
+  print(np.mean(np.nan_to_num(np.abs((b - a) / b))))
 
   plt.figure(figsize=(12, 9))
   for i, batch in enumerate(force.tolist()):
