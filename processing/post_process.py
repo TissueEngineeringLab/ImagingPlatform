@@ -85,7 +85,7 @@ def plot_results(img_calib_file: Path,
     results_file: Path to the .csv file containing the raw output from the
       pin tracking interface.
     pins_calib_file: Path to the .csv file containing the force-to-displacement
-      information obtained using finite elements modelling.
+      information obtained using finite elements modeling.
   """
 
   # Load the calibration file
@@ -141,7 +141,8 @@ def plot_results(img_calib_file: Path,
   cbar = plt.colorbar()
   cbar.set_label(label="Force (mN)", size=12)
   cbar.ax.tick_params(labelsize=12)
-  c = plt.contour(*grid, force_grid, colors=('black',), levels=(0.5, 1, 2, 3, 4))
+  c = plt.contour(*grid, force_grid, colors=('black',),
+                  levels=(0.5, 1, 2, 3, 4))
   plt.clabel(c, c.levels, fmt=formatter_contour)
   plt.savefig('./calib_map.svg', dpi=300)
   plt.show()
