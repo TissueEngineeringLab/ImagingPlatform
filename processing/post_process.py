@@ -303,12 +303,12 @@ def plot_results(img_calib_file: Path,
 
   for label in values.keys():
     plt.plot([t.total_seconds() for t in times[label]],
-             values[label] / count[label], label=label)
+             values[label] / count[label], label=label + ' (avg.)')
   lim = ax.get_ylim()
   for t in (refresh_timestamps[0],
             refresh_timestamps[2],
             refresh_timestamps[6]):
-    plt.vlines(t.total_seconds(), *lim, alpha=0.5, color='black')
+    plt.vlines(t.total_seconds(), *lim, alpha=0.35, color='black')
   plt.xlabel("Time in culture (days)", fontsize=12, labelpad=8)
   plt.ylabel("Force (mN)", fontsize=12, labelpad=8)
   plt.legend()
