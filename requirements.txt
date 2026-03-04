@@ -6,3 +6,4 @@ pyqtgraph
 matplotlib
 pandas
 scipy
+tqdm
