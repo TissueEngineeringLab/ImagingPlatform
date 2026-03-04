@@ -17,7 +17,10 @@ def flip_img(img_pth: Path) -> None:
   """
   
   if img_pth.name.endswith("2.png") or img_pth.name.endswith("3.png"):
-    cv2.imwrite(str(img_pth), cv2.flip(cv2.imread(str(img_pth)), -1))
+    try:
+      cv2.imwrite(str(img_pth), cv2.flip(cv2.imread(str(img_pth)), -1))
+    except cv2.error:
+      print(f"Warning! Couldn't flip image {img_pth.name}")
 
 
 if __name__ == "__main__":
