@@ -210,8 +210,8 @@ def calibrate(img_path: Path,
   min_h = min(top_right[1], top_left[1], bottom_right[1], bottom_left[1])
   max_h = max(top_right[1], top_left[1], bottom_right[1], bottom_left[1])
   roi_w = slice(int(rescale_factor * (min_w - 0.1 * (max_w - min_w))), 
-                int(rescale_factor * (max_w + 0.1 * (max_w - min_w))))
-  roi_h = slice(int(rescale_factor * min_h), int(rescale_factor * max_h))
+                int(rescale_factor * (max_w + 0.1 * (max_w - min_w))), 1)
+  roi_h = slice(int(rescale_factor * min_h), int(rescale_factor * max_h), 1)
   
   # Calculate the average number of pixels in each direction
   pix_x = (np.sqrt(np.sum((top_right - top_left) ** 2)) + 
