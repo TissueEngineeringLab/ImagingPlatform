@@ -131,8 +131,8 @@ def calibrate(img_path: Path,
   # Keep only the relevant region of the image
   img_calib = np.full_like(img, 190)
   height, width, *_ = img.shape
-    h_slice = slice(int(0.19 * height), int(0.53 * height), 1)
   if img_path.name.endswith("0.png") or img_path.name.endswith("0.jpg"):
+    h_slice = slice(int(0.18 * height), int(0.52 * height), 1)
     w_slice = slice(int(0.24 * width), int(0.75 * width), 1)
   elif img_path.name.endswith("1.png") or img_path.name.endswith("1.jpg"):
     h_slice = slice(int(0.18 * height), int(0.53 * height), 1)
