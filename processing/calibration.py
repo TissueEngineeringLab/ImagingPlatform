@@ -301,7 +301,7 @@ def crop_to_roi(img_path: Path,
 
     # Undistort the image using the correct parameters
     img = cv2.imread(str(img_path))
-    img = undistort_image(img, mat, coe)
+    img, _ = undistort_image(img, mat, coe)
 
     # Resize the image to have a 1:1 ratio between x and y
     # Also crop it to keep only the valid part of the image
