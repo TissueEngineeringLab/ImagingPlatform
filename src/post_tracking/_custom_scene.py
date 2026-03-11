@@ -5,7 +5,7 @@ and the detected spots."""
 
 from PyQt6.QtWidgets import (QGraphicsScene, QGraphicsSceneMouseEvent,
                              QGraphicsSceneWheelEvent, QGraphicsEllipseItem,
-                             QGraphicsView, QMainWindow)
+                             QGraphicsView, QMainWindow, QInputDialog)
 from PyQt6.QtGui import QPixmap, QPen, QColor, QBrush, QKeyEvent
 from PyQt6.QtCore import QRectF, Qt, pyqtSignal, pyqtSlot, QPoint
 from typing import List, Optional
@@ -87,6 +87,9 @@ class CustomScene(QGraphicsScene):
     self._zoom_factor: float = 1.3
     self._zoom_level: float = 1.0
     self._zoom_index: int = 0
+
+    # Store last manually input circle radius
+    self._last_rad: dict[int, int | None] = {i: None for i in range(6)}
 
     # Draw a circle whenever it is detected
     self.post_detected_in_scene.connect(self.draw_circles_in_scene)
@@ -503,21 +506,35 @@ class CustomScene(QGraphicsScene):
       event: The event emitted by the mouse button release.
     """
 
-    # If there is no other detected spot, abort
+    radius: int | None = None
+
+    # If there is no other detected spot, ask user to provide the radius
     if (all(spot is None for spot in chain(self._quadrant.well_1,
                                            self._quadrant.well_2))):
-      event.accept()
-      return
+      last = self._last_rad[self._quadrant.id]
+      value, ok = QInputDialog.getInt(self._main, "Input radius",
+                                      "Enter the pin radius:",
+                                      value=last if last is not None else 15,
+                                      min=0, max=100, step=1)
+      # If user aborted, do nothing
+      if not ok:
+        event.accept()
+        return
+      # If user entered value, use it and store for later
+      radius = value
+      self._last_rad[self._quadrant.id] = value
 
     # If all the spots are already defined, abort
     if self._quadrant.well_1.is_defined and self._quadrant.well_2.is_defined:
       event.accept()
       return
 
-    # The radius is the average of the ones of the already detected spots
-    radius = int(mean(spot.radius for spot in chain(self._quadrant.well_1,
-                                                    self._quadrant.well_2)
-                      if spot is not None and spot.radius is not None))
+    # If not defined, the radius is the average of the ones of the already
+    # detected spots
+    if radius is None:
+      radius = int(mean(spot.radius for spot in chain(self._quadrant.well_1,
+                                                      self._quadrant.well_2)
+                        if spot is not None and spot.radius is not None))
 
     detected = Spot(int(event.scenePos().x()), int(event.scenePos().y()),
                     radius)
