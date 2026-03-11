@@ -131,22 +131,22 @@ def calibrate(img_path: Path,
   # Keep only the relevant region of the image
   img_calib = np.full_like(img, 190)
   height, width, *_ = img.shape
-  if img_path.name.endswith("0.png"):
     h_slice = slice(int(0.19 * height), int(0.53 * height), 1)
+  if img_path.name.endswith("0.png") or img_path.name.endswith("0.jpg"):
     w_slice = slice(int(0.24 * width), int(0.75 * width), 1)
-  elif img_path.name.endswith("1.png"):
+  elif img_path.name.endswith("1.png") or img_path.name.endswith("1.jpg"):
     h_slice = slice(int(0.18 * height), int(0.53 * height), 1)
     w_slice = slice(int(0.22 * width), int(0.73 * width), 1)
-  elif img_path.name.endswith("2.png"):
+  elif img_path.name.endswith("2.png") or img_path.name.endswith("2.jpg"):
     h_slice = slice(int(0.41 * height), int(0.75 * height), 1)
     w_slice = slice(int(0.23 * width), int(0.74 * width), 1)
-  elif img_path.name.endswith("3.png"):
+  elif img_path.name.endswith("3.png") or img_path.name.endswith("3.jpg"):
     h_slice = slice(int(0.43 * height), int(0.76 * height), 1)
     w_slice = slice(int(0.19 * width), int(0.70 * width), 1)
-  elif img_path.name.endswith("4.png"):
+  elif img_path.name.endswith("4.png") or img_path.name.endswith("4.jpg"):
     h_slice = slice(int(0.48 * height), int(0.82 * height), 1)
     w_slice = slice(int(0.24 * width), int(0.75 * width), 1)
-  elif img_path.name.endswith("5.png"):
+  elif img_path.name.endswith("5.png") or img_path.name.endswith("5.jpg"):
     h_slice = slice(int(0.48 * height), int(0.82 * height), 1)
     w_slice = slice(int(0.21 * width), int(0.73 * width), 1)
   else:
@@ -329,7 +329,7 @@ if __name__ == "__main__":
                    file=sys.stdout,
                    colour='green'):
     
-    index = match(r'.*(\d)\.png', str(path.name)).groups()[0]
+    index = match(r'.*(\d)\.(?:png|jpg)', str(path.name)).groups()[0]
     calib_params[index] = calibrate(img_path=path, 
                                     n_rows=7, 
                                     n_cols=16, 
