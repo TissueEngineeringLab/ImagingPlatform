@@ -309,7 +309,8 @@ def plot_results(img_calib_file: Path,
 
   for label in values.keys():
     plt.plot([t.total_seconds() for t in times[label]],
-             values[label] / count[label], label=label + ' (avg.)')
+             values[label] / count[label], label=label + ' (avg.)',
+             color=col_to_lab[label])
   lim = ax.get_ylim()
   for t in (refresh_timestamps[0],
             refresh_timestamps[2],
